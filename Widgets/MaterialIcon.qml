@@ -1,5 +1,5 @@
 import QtQuick
-import qs.common
+import qs.Common
 
 StyledText {
     id: icon

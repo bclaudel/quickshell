@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell.Hyprland
 
-import qs.common
+import qs.Common
 
 Rectangle {
     id: root
@@ -14,7 +14,7 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     radius: Theme.cornerRadius
     color: {
-        const baseColor = Theme.surfaceTextHover;
+        const baseColor = Theme.secondaryHover;
         return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
     }
 

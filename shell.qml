@@ -1,5 +1,5 @@
 import QtQuick
 
-import qs.modules.bar
+import qs.Modules.TopBar
 
-Bar {}
+TopBar {}

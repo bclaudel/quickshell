@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 
-import qs.common
+import qs.Common
 
 PanelWindow {
     id: root

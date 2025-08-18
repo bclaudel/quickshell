@@ -1,17 +1,19 @@
 import QtQuick
 
-import qs.common
-import qs.widgets
-import qs.services
+import qs.Common
+import qs.Widgets
+import qs.Services
 
 Rectangle {
     id: root
+
+    property bool isActive: false
 
     height: 30
     width: controlCenterRow.width + 2 * Theme.spacingM
     radius: Theme.cornerRadius
     color: {
-        const baseColor = Theme.surfaceTextHover;
+        const baseColor = controlCenterArea.containsMouse || isActive ? Theme.primaryPressed : Theme.secondaryHover;
         return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
     }
     anchors.verticalCenter: parent.verticalCenter
@@ -60,6 +62,18 @@ Rectangle {
             }
             size: Theme.iconSize - 4
             color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText : Theme.outlineButton
+        }
+    }
+
+    MouseArea {
+        id: controlCenterArea
+
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+
+        onClicked: {
+            root.isActive = true;
         }
     }
 }
