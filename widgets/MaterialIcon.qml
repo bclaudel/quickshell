@@ -15,7 +15,7 @@ StyledText {
     font.family: "Material Symbols Rounded"
     font.pixelSize: 14
     font.weight: weight
-    color: Theme.surfaceText
+    // color: Theme.surfaceText
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
     font.variableAxes: ({

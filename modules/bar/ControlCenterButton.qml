@@ -2,6 +2,7 @@ import QtQuick
 
 import qs.common
 import qs.widgets
+import qs.services
 
 Rectangle {
     id: root
@@ -15,18 +16,50 @@ Rectangle {
     }
     anchors.verticalCenter: parent.verticalCenter
 
-    function getWifiSignalIcon(signalStrengh) {
-        return "signal_wifi_4_bar";
+    function getWifiSignalIcon(signalStrength) {
+        switch (signalStrength) {
+        case "excellent":
+            return "wifi";
+        case "good":
+            return "wifi_2_bar";
+        case "fair":
+            return "wifi_1_bar";
+        case "poor":
+            return "signal_wifi_0_bar";
+        default:
+            return "wifi";
+        }
     }
 
     Row {
         id: controlCenterRow
 
         anchors.centerIn: parent
-        spacing: Theme.spacingS
+        spacing: Theme.spacingM
 
         MaterialIcon {
-            text: "signal_wifi_4_bar"
+            name: "notifications"
+            size: Theme.iconSize - 4
+            color: Theme.surfaceText
+        }
+
+        MaterialIcon {
+            name: "bluetooth"
+            size: Theme.iconSize - 4
+            color: Theme.surfaceText
+        }
+
+        MaterialIcon {
+            name: {
+                if (NetworkService.networkStatus === "ethernet")
+                    return "lan";
+                if (NetworkService.networkStatus === "wifi")
+                    return getWifiSignalIcon(NetworkService.wifiSignalStrengthStr);
+                else
+                    "wifi_off";
+            }
+            size: Theme.iconSize - 4
+            color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText : Theme.outlineButton
         }
     }
 }
