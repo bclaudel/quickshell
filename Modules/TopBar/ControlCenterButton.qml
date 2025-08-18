@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
 
 import qs.Common
 import qs.Widgets
@@ -73,7 +75,8 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
 
         onClicked: {
-            root.isActive = true;
+            root.isActive = !root.isActive;
+            Hyprland.dispatch('global quickshell:controlCenterToggle');
         }
     }
 }

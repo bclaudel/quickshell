@@ -6,7 +6,7 @@ import qs.Common
 Rectangle {
     id: root
 
-    property int maxWorkspaces: Settings.maxWorkspaces
+    property int maxWorkspaces: SettingsData.maxWorkspaces
     property var workspaces: getWorkspaces()
 
     height: 30

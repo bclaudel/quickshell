@@ -1,5 +1,14 @@
 import QtQuick
+import Quickshell
 
 import qs.Modules.TopBar
+import qs.Modules.ControlCenter
 
-TopBar {}
+ShellRoot {
+    TopBar {}
+
+    LazyLoader {
+        loading: true
+        component: ControlCenter {}
+    }
+}

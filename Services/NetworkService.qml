@@ -66,7 +66,7 @@ Singleton {
     signal connectionChanged
 
     Component.onCompleted: {
-        root.userPreference = Settings.networkPreference;
+        root.userPreference = SettingsData.networkPreference;
         initializeDBusMonitors();
     }
 

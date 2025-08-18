@@ -6,7 +6,7 @@ import qs.Common
 PanelWindow {
     id: root
 
-    property real backgroundTransparency: Settings.topBarTransparency
+    property real backgroundTransparency: SettingsData.topBarTransparency
 
     color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b, backgroundTransparency)
 
