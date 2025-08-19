@@ -9,6 +9,7 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 
 import qs.Common
+import qs.Widgets
 
 PanelWindow {
     id: root
@@ -18,6 +19,7 @@ PanelWindow {
     visible: SessionData.isControlCenterOpen
     implicitWidth: controlCenterWidth
     exclusiveZone: 0
+    color: "transparent"
 
     anchors {
         top: true
@@ -48,12 +50,85 @@ PanelWindow {
 
     Loader {
         id: controlCenterLoader
+        asynchronous: true
         active: SessionData.isControlCenterOpen
-        focus: SessionData.isControlCenterOpen
 
+        anchors {
+            top: parent.top
+            bottom: parent.bottom
+            right: parent.right
+            left: parent.left
+            topMargin: SettingsData.hyprlandGapsOut
+            bottomMargin: SettingsData.hyprlandGapsOut
+            rightMargin: SettingsData.hyprlandGapsOut
+            leftMargin: SettingsData.hyprlandGapsOut
+        }
+
+        focus: SessionData.isControlCenterOpen
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {
                 root.closeControlCenter();
+            }
+        }
+
+        sourceComponent: Item {
+            implicitWidth: controlCenterBackground.width
+            implicitHeight: controlCenterBackground.height
+
+            Rectangle {
+                id: controlCenterBackground
+                anchors.fill: parent
+                radius: Theme.cornerRadius
+                color: Theme.popupBackground()
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: Theme.spacingL
+                    RowLayout {
+                        spacing: Theme.spacingL
+
+                        MaterialIcon {
+                            name: "home"
+                            size: 50
+                            color: Theme.surfaceText
+                        }
+
+                        StyledText {
+                            text: "Uptime:"
+                            color: Theme.surfaceText
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        MaterialIcon {
+                            name: "restart_alt"
+                            size: Theme.iconSize
+                            color: Theme.surfaceText
+                        }
+
+                        MaterialIcon {
+                            name: "settings"
+                            size: Theme.iconSize
+                            color: Theme.surfaceText
+                        }
+
+                        MaterialButton {
+                            buttonSize: 40
+                            iconName: "power_settings_new"
+                            iconSize: Theme.iconSize
+                            iconColor: Theme.surfaceText
+                            onClicked: {
+                                console.log("Shutdown");
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
             }
         }
     }

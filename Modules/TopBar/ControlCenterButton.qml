@@ -9,13 +9,11 @@ import qs.Services
 Rectangle {
     id: root
 
-    property bool isActive: false
-
     height: 30
     width: controlCenterRow.width + 2 * Theme.spacingM
     radius: Theme.cornerRadius
     color: {
-        const baseColor = controlCenterArea.containsMouse || isActive ? Theme.primaryPressed : Theme.secondaryHover;
+        const baseColor = controlCenterArea.containsMouse || SessionData.isControlCenterOpen ? Theme.primaryPressed : Theme.secondaryHover;
         return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
     }
     anchors.verticalCenter: parent.verticalCenter
@@ -75,7 +73,6 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
 
         onClicked: {
-            root.isActive = !root.isActive;
             Hyprland.dispatch('global quickshell:controlCenterToggle');
         }
     }

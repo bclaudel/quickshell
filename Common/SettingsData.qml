@@ -10,6 +10,7 @@ Singleton {
     property int themeIndex: 0
     property int maxWorkspaces: 8
     property real topBarTransparency: 0.75
+    property real hyprlandGapsOut: 5
 
     property string networkPreference: "auto"
 }

@@ -23,6 +23,40 @@ Singleton {
             "outline": "#8e918f",
             "surfaceContainer": "#1e2023",
             "surfaceContainerHigh": "#292b2f"
+        },
+        {
+            "name": "Deep Blue",
+            "primary": "#0061a4",
+            "primaryText": "#ffffff",
+            "primaryContainer": "#004881",
+            "secondary": "#42a5f5",
+            "surface": "#1a1c1e",
+            "surfaceText": "#e3e8ef",
+            "surfaceVariant": "#44464f",
+            "surfaceVariantText": "#c4c7c5",
+            "surfaceTint": "#8ab4f8",
+            "background": "#1a1c1e",
+            "backgroundText": "#e3e8ef",
+            "outline": "#8e918f",
+            "surfaceContainer": "#1e2023",
+            "surfaceContainerHigh": "#292b2f"
+        },
+        {
+            "name": "Purple",
+            "primary": "#D0BCFF",
+            "primaryText": "#381E72",
+            "primaryContainer": "#4F378B",
+            "secondary": "#CCC2DC",
+            "surface": "#10121E",
+            "surfaceText": "#E6E0E9",
+            "surfaceVariant": "#49454F",
+            "surfaceVariantText": "#CAC4D0",
+            "surfaceTint": "#D0BCFF",
+            "background": "#10121E",
+            "backgroundText": "#E6E0E9",
+            "outline": "#938F99",
+            "surfaceContainer": "#1D1B20",
+            "surfaceContainerHigh": "#2B2930"
         }
     ]
 
@@ -103,5 +137,17 @@ Singleton {
 
     function getCurrentTheme() {
         return themes[currentThemeIndex];
+    }
+
+    function getPopupBackgroundAlpha() {
+        return popupTransparency;
+    }
+
+    function getContentBackgroundAlpha() {
+        return popupTransparency;
+    }
+
+    function popupBackground() {
+        return Qt.rgba(surfaceContainer.r, surfaceContainer.g, surfaceContainer.b, popupTransparency);
     }
 }
