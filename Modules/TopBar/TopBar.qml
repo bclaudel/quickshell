@@ -8,7 +8,7 @@ PanelWindow {
 
     property real backgroundTransparency: SettingsData.topBarTransparency
 
-    color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b, backgroundTransparency)
+    color: Theme.popupBackground()
 
     anchors {
         top: true

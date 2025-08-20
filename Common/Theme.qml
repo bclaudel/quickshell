@@ -70,6 +70,7 @@ Singleton {
     property real fontSizeMedium: 14
     property real fontSizeLarge: 16
     property real fontSizeXLarge: 20
+    property real fontSizeXXLarge: 24
     property real barHeight: 48
     property real iconSize: 24
     property real iconSizeSmall: 16

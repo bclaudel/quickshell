@@ -72,9 +72,6 @@ PanelWindow {
         }
 
         sourceComponent: Item {
-            implicitWidth: controlCenterBackground.width
-            implicitHeight: controlCenterBackground.height
-
             Rectangle {
                 id: controlCenterBackground
                 anchors.fill: parent
@@ -120,7 +117,7 @@ PanelWindow {
                             iconSize: Theme.iconSize
                             iconColor: Theme.surfaceText
                             onClicked: {
-                                console.log("Shutdown");
+                                Hyprland.dispatch("global quickshell:sessionScreenOpen");
                             }
                         }
                     }
