@@ -71,7 +71,7 @@ PanelWindow {
             }
         }
 
-        sourceComponent: Item {
+        sourceComponent: Component {
             Rectangle {
                 id: controlCenterBackground
                 anchors.fill: parent
@@ -81,43 +81,92 @@ PanelWindow {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: Theme.spacingL
-                    RowLayout {
-                        spacing: Theme.spacingL
+                    spacing: Theme.spacingM
 
-                        MaterialIcon {
-                            name: "home"
-                            size: 50
-                            color: Theme.surfaceText
-                        }
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingM
 
-                        StyledText {
-                            text: "Uptime:"
-                            color: Theme.surfaceText
-                        }
+                        Rectangle {
+                            width: parent.width
+                            height: 90
+                            radius: Theme.cornerRadius
+                            color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, Theme.getContentBackgroundAlpha() * 0.4)
+                            border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.08)
+                            border.width: 1
 
-                        Item {
-                            Layout.fillWidth: true
-                        }
+                            Row {
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: Theme.spacingL
+                                anchors.rightMargin: Theme.spacingL
+                                spacing: Theme.spacingL
 
-                        MaterialIcon {
-                            name: "restart_alt"
-                            size: Theme.iconSize
-                            color: Theme.surfaceText
-                        }
+                                Item {
+                                    id: avatarContainer
 
-                        MaterialIcon {
-                            name: "settings"
-                            size: Theme.iconSize
-                            color: Theme.surfaceText
-                        }
+                                    width: 64
+                                    height: 64
 
-                        MaterialButton {
-                            buttonSize: 40
-                            iconName: "power_settings_new"
-                            iconSize: Theme.iconSize
-                            iconColor: Theme.surfaceText
-                            onClicked: {
-                                Hyprland.dispatch("global quickshell:sessionScreenOpen");
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: width / 2
+                                        color: "transparent"
+                                        border.color: Theme.primary
+                                        border.width: 1
+                                        visible: true
+                                    }
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Theme.spacingXS
+
+                                    StyledText {
+                                        text: "Ekko"
+                                        color: Theme.surfaceText
+                                        font.pixelSize: Theme.fontSizeLarge
+                                        font.weight: Font.Medium
+                                    }
+
+                                    StyledText {
+                                        text: "Unknown"
+                                        color: Theme.surfaceText
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.weight: Font.Normal
+                                    }
+                                }
+                            }
+
+                            Row {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.rightMargin: Theme.spacingL
+                                spacing: Theme.spacingS
+
+                                MaterialButton {
+                                      buttonSize: 40
+                                  iconName: "restart_alt"
+                                  iconSize: Theme.iconSize
+                                  iconColor: Theme.surfaceText
+                                }
+
+                                MaterialButton {
+                                  buttonSize: 40
+                                  iconName: "settings"
+                                  iconSize: Theme.iconSize
+                                  iconColor: Theme.surfaceText
+                                }
+
+                                MaterialButton {
+                                  buttonSize: 40
+                                  iconName: "power_settings_new"
+                                  iconSize: Theme.iconSize
+                                  iconColor: Theme.surfaceText
+                                  onClicked: {
+                                      Hyprland.dispatch("global quickshell:sessionScreenOpen");
+                                  }
+                                }
                             }
                         }
                     }
