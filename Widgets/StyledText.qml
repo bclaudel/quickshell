@@ -1,5 +1,7 @@
 import QtQuick
 
+import qs.Common
+
 Text {
     id: root
 

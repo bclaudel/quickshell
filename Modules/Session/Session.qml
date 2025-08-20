@@ -86,7 +86,7 @@ Scope {
                     SessionButton {
                         id: sessionLock
                         focus: lockScreen.visible
-                        iconName: "lock"
+                        buttonIcon: "lock"
                         onClicked: {
                             console.log("Locking session");
                         }
@@ -95,7 +95,7 @@ Scope {
                     }
                     SessionButton {
                         id: sessionLogout
-                        iconName: "logout"
+                        buttonIcon: "logout"
                         onClicked: {
                             console.log("Logging out");
                         }
@@ -105,7 +105,7 @@ Scope {
                     }
                     SessionButton {
                         id: sessionHibernate
-                        iconName: "downloading"
+                        buttonIcon: "downloading"
                         onClicked: {
                             console.log("Hibernating session");
                         }
@@ -114,7 +114,7 @@ Scope {
                     }
                     SessionButton {
                         id: sessionShutdown
-                        iconName: "power_settings_new"
+                        buttonIcon: "power_settings_new"
                         onClicked: {
                             console.log("Powering off");
                         }
@@ -123,7 +123,7 @@ Scope {
                     }
                     SessionButton {
                         id: sessionReboot
-                        iconName: "restart_alt"
+                        buttonIcon: "restart_alt"
                         onClicked: {
                             console.log("Rebooting session");
                         }
@@ -133,9 +133,9 @@ Scope {
                     }
                     SessionButton {
                         id: sessionFirmwareReboot
-                        iconName: "settings_applications"
+                        buttonIcon: "settings_applications"
                         onClicked: {
-                            console.log("Reboot to firmware setting ");
+                            console.log("Reboot to firmware settings");
                         }
                         KeyNavigation.left: sessionReboot
                         KeyNavigation.up: sessionHibernate
