@@ -31,8 +31,7 @@ PanelWindow {
             height: parent.height
             spacing: Theme.spacingXS
 
-            Workspaces {
-            }
+            Workspaces {}
         }
 
         Row {
@@ -43,8 +42,7 @@ PanelWindow {
             height: parent.height
             spacing: Theme.spacingXS
 
-            ControlCenterButton {
-            }
+            ControlCenterButton {}
         }
     }
 }

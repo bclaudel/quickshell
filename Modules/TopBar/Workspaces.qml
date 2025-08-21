@@ -21,7 +21,9 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     color: {
         const baseColor = Theme.secondaryHover;
-        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a
+                       * Theme.widgetTransparency);
+
     }
     height: 30
     radius: Theme.cornerRadius
@@ -53,10 +55,12 @@ Rectangle {
                 property bool isActive: workspaces[index]?.active ?? false
                 property bool isOccupied: workspaces[index] !== undefined
 
-                color: isActive ? Theme.primary : isOccupied ? Theme.surfaceTextAlpha : Theme.surfaceTextLight
+                color: isActive ? Theme.primary : isOccupied ? Theme.surfaceTextAlpha :
+                                                               Theme.surfaceTextLight
                 height: Theme.spacingL
                 radius: height / 2
-                width: isActive ? Theme.spacingXL + Theme.spacingM : Theme.spacingL + Theme.spacingXS
+                width: isActive ? Theme.spacingXL + Theme.spacingM : Theme.spacingL
+                                  + Theme.spacingXS
             }
         }
     }

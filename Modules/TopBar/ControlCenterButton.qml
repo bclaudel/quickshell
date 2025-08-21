@@ -25,9 +25,11 @@ Rectangle {
 
     anchors.verticalCenter: parent.verticalCenter
     color: {
-        const baseColor = controlCenterArea.containsMouse || SessionData.isControlCenterOpen ? Theme.primaryPressed :
-                                                                                               Theme.secondaryHover;
-        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
+        const baseColor = controlCenterArea.containsMouse || SessionData.isControlCenterOpen
+              ? Theme.primaryPressed : Theme.secondaryHover;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a
+                       * Theme.widgetTransparency);
+
     }
     height: 30
     radius: Theme.cornerRadius
@@ -52,7 +54,8 @@ Rectangle {
         }
 
         MaterialIcon {
-            color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText : Theme.outlineButton
+            color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText :
+                                                                     Theme.outlineButton
             name: {
                 if (NetworkService.networkStatus === "ethernet")
                     return "lan";

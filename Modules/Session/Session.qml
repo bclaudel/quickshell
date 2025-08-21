@@ -14,7 +14,8 @@ import qs.Widgets
 Scope {
     id: root
 
-    property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
+    property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor
+                                                        ?.name)
 
     function closeLockScreen() {
         lockScreenLoader.active = false;
@@ -39,8 +40,8 @@ Scope {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:lockScreen"
-            color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b,
-                           Theme.opacityMedium)
+            color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g,
+                           Theme.surfaceContainer.b, Theme.opacityMedium)
             exclusionMode: ExclusionMode.Ignore
             implicitHeight: root.focusedScreen?.height ?? 0
             implicitWidth: root.focusedScreen?.width ?? 0

@@ -9,10 +9,11 @@ Button {
     property color backgroundHover: Theme.secondary
     property color backgroundToggled: Theme.secondary
     property color backgroundToggledHover: Theme.secondary
-    property color buttonColor: root.enabled ? (root.toggled ? (root.hovered ? backgroundToggledHover :
-                                                                               backgroundToggled) : (root.hovered
-                                                                                                     ? backgroundHover :
-                                                                                                       backgroundColor)) :
+    property color buttonColor: root.enabled ? (root.toggled ? (root.hovered
+                                                                ? backgroundToggledHover :
+                                                                  backgroundToggled) : (
+                                                                   root.hovered ? backgroundHover :
+                                                                                  backgroundColor)) :
                                                backgroundColor
     property real buttonHeight
     property real buttonRadius: Theme.cornerRadius

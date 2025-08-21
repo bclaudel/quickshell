@@ -1,5 +1,6 @@
 pragma Singleton
 pragma ComponentBehavior
+
 import QtQuick
 import Quickshell
 
@@ -56,8 +57,10 @@ Singleton {
     property color surfaceContainerHigh: getCurrentTheme().surfaceContainerHigh
     property color surfaceHover: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b, 0.08)
     property color surfaceLight: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b, 0.1)
-    property color surfacePressed: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b, 0.12)
-    property color surfaceSelected: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b, 0.15)
+    property color surfacePressed: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b,
+                                           0.12)
+    property color surfaceSelected: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b,
+                                            0.15)
     property color surfaceText: getCurrentTheme().surfaceText
     property color surfaceTextAlpha: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.3)
     property color surfaceTextHover: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.08)
@@ -65,7 +68,8 @@ Singleton {
     property color surfaceTextMedium: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.7)
     property color surfaceTextPressed: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.12)
     property color surfaceVariant: getCurrentTheme().surfaceVariant
-    property color surfaceVariantAlpha: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b, 0.2)
+    property color surfaceVariantAlpha: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b,
+                                                0.2)
     property color tempDanger: "#ff5555"
     // Temperature-specific colors
     property color tempWarning: "#ff9933"
@@ -139,6 +143,7 @@ Singleton {
     }
 
     function popupBackground() {
-        return Qt.rgba(surfaceContainer.r, surfaceContainer.g, surfaceContainer.b, popupTransparency);
+        return Qt.rgba(surfaceContainer.r, surfaceContainer.g, surfaceContainer.b,
+                       popupTransparency);
     }
 }

@@ -299,8 +299,8 @@ Singleton {
             splitMarker: "\n"
 
             onRead: line => {
-                if (line.includes("StateChanged") || line.includes("PrimaryConnectionChanged") || line.includes(
-                        "WirelessEnabled") || line.includes("ActiveConnection")) {
+                if (line.includes("StateChanged") || line.includes("PrimaryConnectionChanged")
+                    || line.includes("WirelessEnabled") || line.includes("ActiveConnection")) {
                     root.refreshNetworkState();
                 }
             }
@@ -326,9 +326,10 @@ Singleton {
     Process {
         id: primaryConnectionQuery
 
-        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path",
-            "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get",
-            "org.freedesktop.NetworkManager", "PrimaryConnection"]
+        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
+            "--object-path", "/org/freedesktop/NetworkManager", "--method",
+            "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager",
+            "PrimaryConnection"]
         running: false
 
         stdout: StdioCollector {
@@ -348,10 +349,12 @@ Singleton {
     Process {
         id: getPrimaryConnectionType
 
-        command: root.primaryConnection ? ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
-                                           "--object-path", root.primaryConnection, "--method",
+        command: root.primaryConnection ? ["gdbus", "call", "--system", "--dest",
+                                           "org.freedesktop.NetworkManager", "--object-path",
+                                           root.primaryConnection, "--method",
                                            "org.freedesktop.DBus.Properties.Get",
-                                           "org.freedesktop.NetworkManager.Connection.Active", "Type"] : []
+                                           "org.freedesktop.NetworkManager.Connection.Active",
+                                           "Type"] : []
         running: false
 
         stdout: StdioCollector {
@@ -388,7 +391,8 @@ Singleton {
                 if (ethernetInterface) {
                     root.ethernetInterface = ethernetInterface;
                     getEthernetDevicePath.command = ["gdbus", "call", "--system", "--dest",
-                                                     "org.freedesktop.NetworkManager", "--object-path",
+                                                     "org.freedesktop.NetworkManager",
+                                                     "--object-path",
                                                      "/org/freedesktop/NetworkManager", "--method",
                                                      "org.freedesktop.NetworkManager.GetDeviceByIpIface",
                                                      ethernetInterface];
@@ -411,8 +415,9 @@ Singleton {
                 const match = text.match(/objectpath '([^']+)'/);
                 if (match && match[1] !== '/') {
                     checkEthernetState.command = ["gdbus", "call", "--system", "--dest",
-                                                  "org.freedesktop.NetworkManager", "--object-path", match[1],
-                                                  "--method", "org.freedesktop.DBus.Properties.Get",
+                                                  "org.freedesktop.NetworkManager", "--object-path",
+                                                  match[1], "--method",
+                                                  "org.freedesktop.DBus.Properties.Get",
                                                   "org.freedesktop.NetworkManager.Device", "State"];
                     checkEthernetState.running = true;
                 } else {
@@ -487,9 +492,11 @@ Singleton {
 
                 if (wifiInterface) {
                     root.wifiInterface = wifiInterface;
-                    getWifiDevicePath.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
-                                                 "--object-path", "/org/freedesktop/NetworkManager", "--method",
-                                                 "org.freedesktop.NetworkManager.GetDeviceByIpIface", wifiInterface];
+                    getWifiDevicePath.command = ["gdbus", "call", "--system", "--dest",
+                                                 "org.freedesktop.NetworkManager", "--object-path",
+                                                 "/org/freedesktop/NetworkManager", "--method",
+                                                 "org.freedesktop.NetworkManager.GetDeviceByIpIface",
+                                                 wifiInterface];
                     getWifiDevicePath.running = true;
                 } else {
                     root.wifiInterface = "";
@@ -508,8 +515,9 @@ Singleton {
             onStreamFinished: {
                 const match = text.match(/objectpath '([^']+)'/);
                 if (match && match[1] !== '/') {
-                    checkWifiState.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
-                                              "--object-path", match[1], "--method",
+                    checkWifiState.command = ["gdbus", "call", "--system", "--dest",
+                                              "org.freedesktop.NetworkManager", "--object-path",
+                                              match[1], "--method",
                                               "org.freedesktop.DBus.Properties.Get",
                                               "org.freedesktop.NetworkManager.Device", "State"];
                     checkWifiState.running = true;
@@ -566,8 +574,8 @@ Singleton {
     Process {
         id: getCurrentWifiInfo
 
-        command: root.wifiInterface ? ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "dev", "wifi", "list", "ifname",
-                                       root.wifiInterface] : []
+        command: root.wifiInterface ? ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "dev", "wifi", "list",
+                                       "ifname", root.wifiInterface] : []
         running: false
 
         stdout: SplitParser {
@@ -622,9 +630,10 @@ Singleton {
     Process {
         id: checkWifiEnabled
 
-        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path",
-            "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get",
-            "org.freedesktop.NetworkManager", "WirelessEnabled"]
+        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
+            "--object-path", "/org/freedesktop/NetworkManager", "--method",
+            "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager",
+            "WirelessEnabled"]
         running: false
 
         stdout: StdioCollector {
@@ -638,7 +647,8 @@ Singleton {
     Process {
         id: requestWifiScan
 
-        command: root.wifiInterface ? ["nmcli", "dev", "wifi", "rescan", "ifname", root.wifiInterface] : []
+        command: root.wifiInterface ? ["nmcli", "dev", "wifi", "rescan", "ifname",
+                                       root.wifiInterface] : []
         running: false
 
         onExited: exitCode => {
@@ -818,8 +828,10 @@ Singleton {
             if (exitCode === 0) {
                 ToastService.showInfo(`Forgot network ${root.forgetSSID}`);
 
-                root.savedConnections = root.savedConnections.filter(s => s.ssid !== root.forgetSSID);
-                root.savedWifiNetworks = root.savedWifiNetworks.filter(s => s.ssid !== root.forgetSSID);
+                root.savedConnections = root.savedConnections.filter(s => s.ssid
+                                                                     !== root.forgetSSID);
+                root.savedWifiNetworks = root.savedWifiNetworks.filter(s => s.ssid
+                                                                       !== root.forgetSSID);
 
                 let updated = [...root.wifiNetworks];
                 for (let network of updated) {
@@ -887,8 +899,8 @@ Singleton {
     Process {
         id: wifiInfoFetcher
 
-        command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,FREQ,RATE,MODE,CHAN,WPA-FLAGS,RSN-FLAGS", "dev", "wifi",
-            "list"]
+        command: ["nmcli", "-t", "-f",
+            "SSID,SIGNAL,SECURITY,FREQ,RATE,MODE,CHAN,WPA-FLAGS,RSN-FLAGS", "dev", "wifi", "list"]
         running: false
 
         stdout: StdioCollector {

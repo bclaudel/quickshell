@@ -1,11 +1,9 @@
-import Qt5Compat.GraphicalEffects
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
+
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Io
-import Quickshell.Wayland
+
 import qs.Common
 import qs.Widgets
 
@@ -73,9 +71,11 @@ PanelWindow {
                         width: parent.width
 
                         Rectangle {
-                            border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.08)
+                            border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b,
+                                                  0.08)
                             border.width: 1
-                            color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, Theme.getContentBackgroundAlpha(
+                            color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g,
+                                           Theme.surfaceVariant.b, Theme.getContentBackgroundAlpha(
                                                ) * 0.4)
                             height: 90
                             radius: Theme.cornerRadius
@@ -142,6 +142,10 @@ PanelWindow {
                                     iconColor: Theme.surfaceText
                                     iconName: "settings"
                                     iconSize: Theme.iconSize
+
+                                    onClicked: {
+                                        Hyprland.dispatch("global quickshell:openLauncherModal");
+                                    }
                                 }
 
                                 MaterialButton {
