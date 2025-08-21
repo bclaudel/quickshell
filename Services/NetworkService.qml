@@ -9,72 +9,168 @@ import qs.Common
 Singleton {
     id: root
 
-    // Core network state
-    property int refCount: 0
-    property string networkStatus: "disconnected" // "ethernet", "wifi", "disconnected"
-    property string primaryConnection: "" // Active connection UUID
+    property bool autoRefreshEnabled: false
+    property bool autoScan: false
+    property bool changingPreference: false
+    property string connectingSSID: ""
+    property string connectionError: ""
+    property string connectionStatus: ""
+
+    // WiFi details
+    property string currentWifiSSID: ""
+    property bool ethernetConnected: false
+    property string ethernetConnectionUuid: ""
 
     // Ethernet properties
     property string ethernetIP: ""
     property string ethernetInterface: ""
-    property bool ethernetConnected: false
-    property string ethernetConnectionUuid: ""
+    property string forgetSSID: ""
+    property bool isConnecting: false
+
+    // Scanning
+    property bool isScanning: false
+    property string lastConnectionError: ""
+    property string networkInfoDetails: ""
+    property bool networkInfoLoading: false
+
+    // Network info properties
+    property string networkInfoSSID: ""
+    property string networkStatus: "disconnected" // "ethernet", "wifi", "disconnected"
+    property bool passwordDialogShouldReopen: false
+    property string primaryConnection: "" // Active connection UUID
+
+    // Core network state
+    property int refCount: 0
+    property var savedConnections: []
+    property var savedWifiNetworks: []
+    property string targetPreference: ""
+
+    // Connection management
+    property string userPreference: "auto" // "auto", "wifi", "ethernet"
+
+    // Legacy compatibility properties
+    property bool wifiAvailable: true
+    property bool wifiConnected: false
+    property string wifiConnectionUuid: ""
+    property bool wifiEnabled: true
 
     // WiFi properties
     property string wifiIP: ""
     property string wifiInterface: ""
-    property bool wifiConnected: false
-    property bool wifiEnabled: true
-    property string wifiConnectionUuid: ""
-
-    // WiFi details
-    property string currentWifiSSID: ""
-    property int wifiSignalStrength: 0
     property var wifiNetworks: []
-    property var savedConnections: []
-
-    // Connection management
-    property string userPreference: "auto" // "auto", "wifi", "ethernet"
-    property bool isConnecting: false
-    property string connectingSSID: ""
-    property string connectionError: ""
-
-    // Scanning
-    property bool isScanning: false
-    property bool autoScan: false
-
-    // Legacy compatibility properties
-    property bool wifiAvailable: true
-    property bool wifiToggling: false
-    property bool changingPreference: false
-    property string targetPreference: ""
-    property string wifiSignalStrengthStr: "excellent"
-    property var savedWifiNetworks: []
-    property string connectionStatus: ""
-    property string lastConnectionError: ""
-    property bool passwordDialogShouldReopen: false
-    property bool autoRefreshEnabled: false
     property string wifiPassword: ""
-    property string forgetSSID: ""
+    property int wifiSignalStrength: 0
+    property string wifiSignalStrengthStr: "excellent"
+    property bool wifiToggling: false
 
-    // Network info properties
-    property string networkInfoSSID: ""
-    property string networkInfoDetails: ""
-    property bool networkInfoLoading: false
-
-    signal networksUpdated
     signal connectionChanged
-
-    Component.onCompleted: {
-        root.userPreference = SettingsData.networkPreference;
-        initializeDBusMonitors();
-    }
+    signal networksUpdated
 
     function addRef() {
         refCount++;
         if (refCount === 1) {
             startAutoScan();
         }
+    }
+
+    function connectToWifi(ssid, password = "") {
+        if (root.isConnecting)
+            return;
+        root.isConnecting = true;
+        root.connectingSSID = ssid;
+        root.connectionError = "";
+        root.connectionStatus = "connecting";
+
+        if (password) {
+            wifiConnector.command = ["nmcli", "dev", "wifi", "connect", ssid, "password", password];
+        } else {
+            wifiConnector.command = ["nmcli", "dev", "wifi", "connect", ssid];
+        }
+        wifiConnector.running = true;
+    }
+
+    function connectToWifiAndSetPreference(ssid, password) {
+        connectToWifiWithPassword(ssid, password);
+        setNetworkPreference("wifi");
+    }
+
+    function connectToWifiWithPassword(ssid, password) {
+        connectToWifi(ssid, password);
+    }
+
+    function delayedRefreshNetworkStatus() {
+        refreshNetworkState();
+    }
+
+    function disconnectWifi() {
+        if (!root.wifiInterface)
+            return;
+        wifiDisconnector.command = ["nmcli", "dev", "disconnect", root.wifiInterface];
+        wifiDisconnector.running = true;
+    }
+
+    function enableWifiDevice() {
+        wifiDeviceEnabler.running = true;
+    }
+
+    // ===== Network Info =====
+
+    function fetchNetworkInfo(ssid) {
+        root.networkInfoSSID = ssid;
+        root.networkInfoLoading = true;
+        root.networkInfoDetails = "Loading network information...";
+        wifiInfoFetcher.running = true;
+    }
+
+    function forgetWifiNetwork(ssid) {
+        root.forgetSSID = ssid;
+        networkForgetter.command = ["nmcli", "connection", "delete", ssid];
+        networkForgetter.running = true;
+    }
+
+    function getNetworkInfo(ssid) {
+        const network = root.wifiNetworks.find(n => n.ssid === ssid);
+        if (!network)
+            return null;
+
+        return {
+            ssid: network.ssid,
+            signal: network.signal,
+            signalQuality: getSignalQuality(network.signal),
+            secured: network.secured,
+            saved: network.saved,
+            connected: network.connected,
+            bssid: network.bssid
+        };
+    }
+
+    function getSignalQuality(strength) {
+        if (strength >= 75)
+            return "excellent";
+        if (strength >= 50)
+            return "good";
+        if (strength >= 25)
+            return "fair";
+        return "poor";
+    }
+
+    function initializeDBusMonitors() {
+        nmStateMonitor.running = true;
+        refreshNetworkState();
+    }
+
+    function refreshNetworkState() {
+        updatePrimaryConnection();
+        updateDeviceStates();
+        updateActiveConnections();
+        updateWifiState();
+        if (root.refCount > 0 && root.wifiEnabled) {
+            scanWifiNetworks();
+        }
+    }
+
+    function refreshNetworkStatus() {
+        refreshNetworkState();
     }
 
     function removeRef() {
@@ -84,20 +180,127 @@ Singleton {
         }
     }
 
-    function initializeDBusMonitors() {
-        nmStateMonitor.running = true;
-        refreshNetworkState();
+    function scanWifi() {
+        if (root.isScanning || !root.wifiEnabled)
+            return;
+        root.isScanning = true;
+        requestWifiScan.running = true;
+    }
+
+    function scanWifiNetworks() {
+        if (!root.wifiInterface) {
+            root.isScanning = false;
+            return;
+        }
+
+        getWifiNetworks.running = true;
+        getSavedConnections.running = true;
+    }
+
+    function setConnectionPriority(type) {
+        if (type === "wifi") {
+            setRouteMetrics.command = ["bash", "-c",
+                                       "nmcli -t -f NAME,TYPE connection show | grep 802-11-wireless | cut -d: -f1 | "
+                                       + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 50 ipv6.route-metric 50'; "
+                                       + "nmcli -t -f NAME,TYPE connection show | grep 802-3-ethernet | cut -d: -f1 | "
+                                       + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 100 ipv6.route-metric 100'"];
+        } else if (type === "ethernet") {
+            setRouteMetrics.command = ["bash", "-c",
+                                       "nmcli -t -f NAME,TYPE connection show | grep 802-3-ethernet | cut -d: -f1 | "
+                                       + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 50 ipv6.route-metric 50'; "
+                                       + "nmcli -t -f NAME,TYPE connection show | grep 802-11-wireless | cut -d: -f1 | "
+                                       + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 100 ipv6.route-metric 100'"];
+        }
+        setRouteMetrics.running = true;
+    }
+
+    // ===== Network Preference Management =====
+
+    function setNetworkPreference(preference) {
+        root.userPreference = preference;
+        root.changingPreference = true;
+        root.targetPreference = preference;
+        SettingsData.setNetworkPreference(preference);
+
+        if (preference === "wifi") {
+            setConnectionPriority("wifi");
+        } else if (preference === "ethernet") {
+            setConnectionPriority("ethernet");
+        }
+        // "auto" uses default NetworkManager behavior
+    }
+
+    function startAutoScan() {
+        root.autoScan = true;
+        root.autoRefreshEnabled = true;
+        if (root.wifiEnabled) {
+            scanWifi();
+        }
+    }
+
+    function stopAutoScan() {
+        root.autoScan = false;
+        root.autoRefreshEnabled = false;
+    }
+
+    function toggleNetworkConnection(type) {
+        if (type === "ethernet") {
+            if (root.networkStatus === "ethernet") {
+                ethernetDisconnector.running = true;
+            } else {
+                ethernetConnector.running = true;
+            }
+        }
+    }
+
+    function toggleWifiRadio() {
+        if (root.wifiToggling)
+            return;
+        root.wifiToggling = true;
+        const targetState = root.wifiEnabled ? "off" : "on";
+        wifiRadioToggler.targetState = targetState;
+        wifiRadioToggler.command = ["nmcli", "radio", "wifi", targetState];
+        wifiRadioToggler.running = true;
+    }
+
+    function updateActiveConnections() {
+        getActiveConnections.running = true;
+    }
+
+    function updateCurrentWifiInfo() {
+        getCurrentWifiInfo.running = true;
+    }
+
+    function updateDeviceStates() {
+        getEthernetDevice.running = true;
+        getWifiDevice.running = true;
+    }
+
+    function updatePrimaryConnection() {
+        primaryConnectionQuery.running = true;
+    }
+
+    function updateWifiState() {
+        checkWifiEnabled.running = true;
+    }
+
+    Component.onCompleted: {
+        root.userPreference = SettingsData.networkPreference;
+        initializeDBusMonitors();
     }
 
     Process {
         id: nmStateMonitor
+
         command: ["gdbus", "monitor", "--system", "--dest", "org.freedesktop.NetworkManager"]
         running: false
 
         stdout: SplitParser {
             splitMarker: "\n"
+
             onRead: line => {
-                if (line.includes("StateChanged") || line.includes("PrimaryConnectionChanged") || line.includes("WirelessEnabled") || line.includes("ActiveConnection")) {
+                if (line.includes("StateChanged") || line.includes("PrimaryConnectionChanged") || line.includes(
+                        "WirelessEnabled") || line.includes("ActiveConnection")) {
                     root.refreshNetworkState();
                 }
             }
@@ -113,28 +316,19 @@ Singleton {
 
     Timer {
         id: restartTimer
+
         interval: 5000
         running: false
+
         onTriggered: nmStateMonitor.running = true
-    }
-
-    function refreshNetworkState() {
-        updatePrimaryConnection();
-        updateDeviceStates();
-        updateActiveConnections();
-        updateWifiState();
-        if (root.refCount > 0 && root.wifiEnabled) {
-            scanWifiNetworks();
-        }
-    }
-
-    function updatePrimaryConnection() {
-        primaryConnectionQuery.running = true;
     }
 
     Process {
         id: primaryConnectionQuery
-        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager", "PrimaryConnection"]
+
+        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path",
+            "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get",
+            "org.freedesktop.NetworkManager", "PrimaryConnection"]
         running: false
 
         stdout: StdioCollector {
@@ -153,7 +347,11 @@ Singleton {
 
     Process {
         id: getPrimaryConnectionType
-        command: root.primaryConnection ? ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", root.primaryConnection, "--method", "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager.Connection.Active", "Type"] : []
+
+        command: root.primaryConnection ? ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
+                                           "--object-path", root.primaryConnection, "--method",
+                                           "org.freedesktop.DBus.Properties.Get",
+                                           "org.freedesktop.NetworkManager.Connection.Active", "Type"] : []
         running: false
 
         stdout: StdioCollector {
@@ -168,13 +366,9 @@ Singleton {
         }
     }
 
-    function updateDeviceStates() {
-        getEthernetDevice.running = true;
-        getWifiDevice.running = true;
-    }
-
     Process {
         id: getEthernetDevice
+
         command: ["nmcli", "-t", "-f", "DEVICE,TYPE", "device"]
         running: false
 
@@ -193,7 +387,11 @@ Singleton {
 
                 if (ethernetInterface) {
                     root.ethernetInterface = ethernetInterface;
-                    getEthernetDevicePath.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.NetworkManager.GetDeviceByIpIface", ethernetInterface];
+                    getEthernetDevicePath.command = ["gdbus", "call", "--system", "--dest",
+                                                     "org.freedesktop.NetworkManager", "--object-path",
+                                                     "/org/freedesktop/NetworkManager", "--method",
+                                                     "org.freedesktop.NetworkManager.GetDeviceByIpIface",
+                                                     ethernetInterface];
                     getEthernetDevicePath.running = true;
                 } else {
                     root.ethernetInterface = "";
@@ -205,13 +403,17 @@ Singleton {
 
     Process {
         id: getEthernetDevicePath
+
         running: false
 
         stdout: StdioCollector {
             onStreamFinished: {
                 const match = text.match(/objectpath '([^']+)'/);
                 if (match && match[1] !== '/') {
-                    checkEthernetState.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", match[1], "--method", "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager.Device", "State"];
+                    checkEthernetState.command = ["gdbus", "call", "--system", "--dest",
+                                                  "org.freedesktop.NetworkManager", "--object-path", match[1],
+                                                  "--method", "org.freedesktop.DBus.Properties.Get",
+                                                  "org.freedesktop.NetworkManager.Device", "State"];
                     checkEthernetState.running = true;
                 } else {
                     root.ethernetInterface = "";
@@ -230,6 +432,7 @@ Singleton {
 
     Process {
         id: checkEthernetState
+
         running: false
 
         stdout: StdioCollector {
@@ -250,6 +453,7 @@ Singleton {
 
     Process {
         id: getEthernetIP
+
         command: root.ethernetInterface ? ["ip", "-4", "addr", "show", root.ethernetInterface] : []
         running: false
 
@@ -257,13 +461,14 @@ Singleton {
             onStreamFinished: {
                 const match = text.match(/inet (\d+\.\d+\.\d+\.\d+)/);
                 if (match)
-                    root.ethernetIP = match[1];
+                root.ethernetIP = match[1];
             }
         }
     }
 
     Process {
         id: getWifiDevice
+
         command: ["nmcli", "-t", "-f", "DEVICE,TYPE", "device"]
         running: false
 
@@ -282,7 +487,9 @@ Singleton {
 
                 if (wifiInterface) {
                     root.wifiInterface = wifiInterface;
-                    getWifiDevicePath.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.NetworkManager.GetDeviceByIpIface", wifiInterface];
+                    getWifiDevicePath.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
+                                                 "--object-path", "/org/freedesktop/NetworkManager", "--method",
+                                                 "org.freedesktop.NetworkManager.GetDeviceByIpIface", wifiInterface];
                     getWifiDevicePath.running = true;
                 } else {
                     root.wifiInterface = "";
@@ -294,13 +501,17 @@ Singleton {
 
     Process {
         id: getWifiDevicePath
+
         running: false
 
         stdout: StdioCollector {
             onStreamFinished: {
                 const match = text.match(/objectpath '([^']+)'/);
                 if (match && match[1] !== '/') {
-                    checkWifiState.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", match[1], "--method", "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager.Device", "State"];
+                    checkWifiState.command = ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager",
+                                              "--object-path", match[1], "--method",
+                                              "org.freedesktop.DBus.Properties.Get",
+                                              "org.freedesktop.NetworkManager.Device", "State"];
                     checkWifiState.running = true;
                 } else {
                     root.wifiInterface = "";
@@ -319,6 +530,7 @@ Singleton {
 
     Process {
         id: checkWifiState
+
         running: false
 
         stdout: StdioCollector {
@@ -338,6 +550,7 @@ Singleton {
 
     Process {
         id: getWifiIP
+
         command: root.wifiInterface ? ["ip", "-4", "addr", "show", root.wifiInterface] : []
         running: false
 
@@ -345,18 +558,21 @@ Singleton {
             onStreamFinished: {
                 const match = text.match(/inet (\d+\.\d+\.\d+\.\d+)/);
                 if (match)
-                    root.wifiIP = match[1];
+                root.wifiIP = match[1];
             }
         }
     }
 
     Process {
         id: getCurrentWifiInfo
-        command: root.wifiInterface ? ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "dev", "wifi", "list", "ifname", root.wifiInterface] : []
+
+        command: root.wifiInterface ? ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "dev", "wifi", "list", "ifname",
+                                       root.wifiInterface] : []
         running: false
 
         stdout: SplitParser {
             splitMarker: "\n"
+
             onRead: line => {
                 if (line.startsWith("yes:")) {
                     const parts = line.substring(4).split(":");
@@ -379,12 +595,9 @@ Singleton {
         }
     }
 
-    function updateActiveConnections() {
-        getActiveConnections.running = true;
-    }
-
     Process {
         id: getActiveConnections
+
         command: ["nmcli", "-t", "-f", "UUID,TYPE,DEVICE,STATE", "connection", "show", "--active"]
         running: false
 
@@ -406,13 +619,12 @@ Singleton {
         }
     }
 
-    function updateWifiState() {
-        checkWifiEnabled.running = true;
-    }
-
     Process {
         id: checkWifiEnabled
-        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path", "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get", "org.freedesktop.NetworkManager", "WirelessEnabled"]
+
+        command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.NetworkManager", "--object-path",
+            "/org/freedesktop/NetworkManager", "--method", "org.freedesktop.DBus.Properties.Get",
+            "org.freedesktop.NetworkManager", "WirelessEnabled"]
         running: false
 
         stdout: StdioCollector {
@@ -423,15 +635,9 @@ Singleton {
         }
     }
 
-    function scanWifi() {
-        if (root.isScanning || !root.wifiEnabled)
-            return;
-        root.isScanning = true;
-        requestWifiScan.running = true;
-    }
-
     Process {
         id: requestWifiScan
+
         command: root.wifiInterface ? ["nmcli", "dev", "wifi", "rescan", "ifname", root.wifiInterface] : []
         running: false
 
@@ -445,19 +651,11 @@ Singleton {
         }
     }
 
-    function scanWifiNetworks() {
-        if (!root.wifiInterface) {
-            root.isScanning = false;
-            return;
-        }
-
-        getWifiNetworks.running = true;
-        getSavedConnections.running = true;
-    }
-
     Process {
         id: getWifiNetworks
-        command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,BSSID", "dev", "wifi", "list", "ifname", root.wifiInterface]
+
+        command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,BSSID", "dev", "wifi", "list", "ifname",
+            root.wifiInterface]
         running: false
 
         stdout: StdioCollector {
@@ -475,21 +673,21 @@ Singleton {
                             const signal = parseInt(parts[1]) || 0;
                             let signalQuality = "poor";
                             if (signal >= 75)
-                                signalQuality = "excellent";
+                            signalQuality = "excellent";
                             else if (signal >= 50)
-                                signalQuality = "good";
+                            signalQuality = "good";
                             else if (signal >= 25)
-                                signalQuality = "fair";
+                            signalQuality = "fair";
 
                             networks.push({
-                                ssid: ssid,
-                                signal: signal,
-                                signalStrength: signalQuality,
-                                secured: parts[2] !== "",
-                                bssid: parts[3],
-                                connected: ssid === root.currentWifiSSID,
-                                saved: false // Will be updated by saved connections check
-                            });
+                                              ssid: ssid,
+                                              signal: signal,
+                                              signalStrength: signalQuality,
+                                              secured: parts[2] !== "",
+                                              bssid: parts[3],
+                                              connected: ssid === root.currentWifiSSID,
+                                              saved: false // Will be updated by saved connections check
+                                          });
                         }
                     }
                 }
@@ -504,6 +702,7 @@ Singleton {
 
     Process {
         id: getSavedConnections
+
         command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
         running: false
 
@@ -516,9 +715,9 @@ Singleton {
                     const parts = line.split(':');
                     if (parts.length >= 2 && parts[1] === "802-11-wireless") {
                         saved.push({
-                            ssid: parts[0],
-                            saved: true
-                        });
+                                       ssid: parts[0],
+                                       saved: true
+                                   });
                     }
                 }
 
@@ -534,46 +733,12 @@ Singleton {
         }
     }
 
-    function connectToWifi(ssid, password = "") {
-        if (root.isConnecting)
-            return;
-        root.isConnecting = true;
-        root.connectingSSID = ssid;
-        root.connectionError = "";
-        root.connectionStatus = "connecting";
-
-        if (password) {
-            wifiConnector.command = ["nmcli", "dev", "wifi", "connect", ssid, "password", password];
-        } else {
-            wifiConnector.command = ["nmcli", "dev", "wifi", "connect", ssid];
-        }
-        wifiConnector.running = true;
-    }
-
-    function connectToWifiWithPassword(ssid, password) {
-        connectToWifi(ssid, password);
-    }
-
     Process {
         id: wifiConnector
-        running: false
 
         property bool connectionSucceeded: false
 
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.includes("successfully")) {
-                    wifiConnector.connectionSucceeded = true;
-                    ToastService.showInfo(`Connected to ${root.connectingSSID}`);
-                    root.connectionError = "";
-                    root.connectionStatus = "connected";
-
-                    if (root.userPreference === "wifi" || root.userPreference === "auto") {
-                        setConnectionPriority("wifi");
-                    }
-                }
-            }
-        }
+        running: false
 
         stderr: StdioCollector {
             onStreamFinished: {
@@ -585,6 +750,20 @@ Singleton {
                         root.passwordDialogShouldReopen = true;
                     } else {
                         root.connectionStatus = "failed";
+                    }
+                }
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.includes("successfully")) {
+                    wifiConnector.connectionSucceeded = true;
+                    ToastService.showInfo(`Connected to ${root.connectingSSID}`);
+                    root.connectionError = "";
+                    root.connectionStatus = "connected";
+
+                    if (root.userPreference === "wifi" || root.userPreference === "auto") {
+                        setConnectionPriority("wifi");
                     }
                 }
             }
@@ -615,15 +794,9 @@ Singleton {
         }
     }
 
-    function disconnectWifi() {
-        if (!root.wifiInterface)
-            return;
-        wifiDisconnector.command = ["nmcli", "dev", "disconnect", root.wifiInterface];
-        wifiDisconnector.running = true;
-    }
-
     Process {
         id: wifiDisconnector
+
         running: false
 
         onExited: exitCode => {
@@ -636,14 +809,9 @@ Singleton {
         }
     }
 
-    function forgetWifiNetwork(ssid) {
-        root.forgetSSID = ssid;
-        networkForgetter.command = ["nmcli", "connection", "delete", ssid];
-        networkForgetter.running = true;
-    }
-
     Process {
         id: networkForgetter
+
         running: false
 
         onExited: exitCode => {
@@ -671,21 +839,12 @@ Singleton {
         }
     }
 
-    function toggleWifiRadio() {
-        if (root.wifiToggling)
-            return;
-        root.wifiToggling = true;
-        const targetState = root.wifiEnabled ? "off" : "on";
-        wifiRadioToggler.targetState = targetState;
-        wifiRadioToggler.command = ["nmcli", "radio", "wifi", targetState];
-        wifiRadioToggler.running = true;
-    }
-
     Process {
         id: wifiRadioToggler
-        running: false
 
         property string targetState: ""
+
+        running: false
 
         onExited: exitCode => {
             root.wifiToggling = false;
@@ -697,33 +856,9 @@ Singleton {
         }
     }
 
-    // ===== Network Preference Management =====
-
-    function setNetworkPreference(preference) {
-        root.userPreference = preference;
-        root.changingPreference = true;
-        root.targetPreference = preference;
-        SettingsData.setNetworkPreference(preference);
-
-        if (preference === "wifi") {
-            setConnectionPriority("wifi");
-        } else if (preference === "ethernet") {
-            setConnectionPriority("ethernet");
-        }
-    // "auto" uses default NetworkManager behavior
-    }
-
-    function setConnectionPriority(type) {
-        if (type === "wifi") {
-            setRouteMetrics.command = ["bash", "-c", "nmcli -t -f NAME,TYPE connection show | grep 802-11-wireless | cut -d: -f1 | " + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 50 ipv6.route-metric 50'; " + "nmcli -t -f NAME,TYPE connection show | grep 802-3-ethernet | cut -d: -f1 | " + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 100 ipv6.route-metric 100'"];
-        } else if (type === "ethernet") {
-            setRouteMetrics.command = ["bash", "-c", "nmcli -t -f NAME,TYPE connection show | grep 802-3-ethernet | cut -d: -f1 | " + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 50 ipv6.route-metric 50'; " + "nmcli -t -f NAME,TYPE connection show | grep 802-11-wireless | cut -d: -f1 | " + "xargs -I {} bash -c 'nmcli connection modify \"{}\" ipv4.route-metric 100 ipv6.route-metric 100'"];
-        }
-        setRouteMetrics.running = true;
-    }
-
     Process {
         id: setRouteMetrics
+
         running: false
 
         onExited: exitCode => {
@@ -736,7 +871,10 @@ Singleton {
 
     Process {
         id: restartConnections
-        command: ["bash", "-c", "nmcli -t -f UUID,TYPE connection show --active | " + "grep -E '802-11-wireless|802-3-ethernet' | cut -d: -f1 | " + "xargs -I {} sh -c 'nmcli connection down {} && nmcli connection up {}'"]
+
+        command: ["bash", "-c", "nmcli -t -f UUID,TYPE connection show --active | "
+            + "grep -E '802-11-wireless|802-3-ethernet' | cut -d: -f1 | "
+            + "xargs -I {} sh -c 'nmcli connection down {} && nmcli connection up {}'"]
         running: false
 
         onExited: {
@@ -746,31 +884,11 @@ Singleton {
         }
     }
 
-    function startAutoScan() {
-        root.autoScan = true;
-        root.autoRefreshEnabled = true;
-        if (root.wifiEnabled) {
-            scanWifi();
-        }
-    }
-
-    function stopAutoScan() {
-        root.autoScan = false;
-        root.autoRefreshEnabled = false;
-    }
-
-    // ===== Network Info =====
-
-    function fetchNetworkInfo(ssid) {
-        root.networkInfoSSID = ssid;
-        root.networkInfoLoading = true;
-        root.networkInfoDetails = "Loading network information...";
-        wifiInfoFetcher.running = true;
-    }
-
     Process {
         id: wifiInfoFetcher
-        command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,FREQ,RATE,MODE,CHAN,WPA-FLAGS,RSN-FLAGS", "dev", "wifi", "list"]
+
+        command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,FREQ,RATE,MODE,CHAN,WPA-FLAGS,RSN-FLAGS", "dev", "wifi",
+            "list"]
         running: false
 
         stdout: StdioCollector {
@@ -839,25 +957,11 @@ Singleton {
         }
     }
 
-    function refreshNetworkStatus() {
-        refreshNetworkState();
-    }
-
-    function delayedRefreshNetworkStatus() {
-        refreshNetworkState();
-    }
-
-    function updateCurrentWifiInfo() {
-        getCurrentWifiInfo.running = true;
-    }
-
-    function enableWifiDevice() {
-        wifiDeviceEnabler.running = true;
-    }
-
     Process {
         id: wifiDeviceEnabler
-        command: ["sh", "-c", "WIFI_DEV=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -1); if [ -n \"$WIFI_DEV\" ]; then nmcli device connect \"$WIFI_DEV\"; else echo \"No WiFi device found\"; exit 1; fi"]
+
+        command: ["sh", "-c",
+            "WIFI_DEV=$(nmcli -t -f DEVICE,TYPE device | grep wifi | cut -d: -f1 | head -1); if [ -n \"$WIFI_DEV\" ]; then nmcli device connect \"$WIFI_DEV\"; else echo \"No WiFi device found\"; exit 1; fi"]
         running: false
 
         onExited: exitCode => {
@@ -870,24 +974,11 @@ Singleton {
         }
     }
 
-    function connectToWifiAndSetPreference(ssid, password) {
-        connectToWifiWithPassword(ssid, password);
-        setNetworkPreference("wifi");
-    }
-
-    function toggleNetworkConnection(type) {
-        if (type === "ethernet") {
-            if (root.networkStatus === "ethernet") {
-                ethernetDisconnector.running = true;
-            } else {
-                ethernetConnector.running = true;
-            }
-        }
-    }
-
     Process {
         id: ethernetDisconnector
-        command: ["sh", "-c", "nmcli device disconnect $(nmcli -t -f DEVICE,TYPE device | grep ethernet | cut -d: -f1 | head -1)"]
+
+        command: ["sh", "-c",
+            "nmcli device disconnect $(nmcli -t -f DEVICE,TYPE device | grep ethernet | cut -d: -f1 | head -1)"]
         running: false
 
         onExited: function (exitCode) {
@@ -897,37 +988,13 @@ Singleton {
 
     Process {
         id: ethernetConnector
-        command: ["sh", "-c", "ETH_DEV=$(nmcli -t -f DEVICE,TYPE device | grep ethernet | cut -d: -f1 | head -1); if [ -n \"$ETH_DEV\" ]; then nmcli device connect \"$ETH_DEV\"; else echo \"No ethernet device found\"; exit 1; fi"]
+
+        command: ["sh", "-c",
+            "ETH_DEV=$(nmcli -t -f DEVICE,TYPE device | grep ethernet | cut -d: -f1 | head -1); if [ -n \"$ETH_DEV\" ]; then nmcli device connect \"$ETH_DEV\"; else echo \"No ethernet device found\"; exit 1; fi"]
         running: false
 
         onExited: function (exitCode) {
             refreshNetworkState();
         }
-    }
-
-    function getSignalQuality(strength) {
-        if (strength >= 75)
-            return "excellent";
-        if (strength >= 50)
-            return "good";
-        if (strength >= 25)
-            return "fair";
-        return "poor";
-    }
-
-    function getNetworkInfo(ssid) {
-        const network = root.wifiNetworks.find(n => n.ssid === ssid);
-        if (!network)
-            return null;
-
-        return {
-            ssid: network.ssid,
-            signal: network.signal,
-            signalQuality: getSignalQuality(network.signal),
-            secured: network.secured,
-            saved: network.saved,
-            connected: network.connected,
-            bssid: network.bssid
-        };
     }
 }

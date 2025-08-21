@@ -1,22 +1,12 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
-
 import qs.Common
-import qs.Widgets
 import qs.Services
+import qs.Widgets
 
 Rectangle {
     id: root
-
-    height: 30
-    width: controlCenterRow.width + 2 * Theme.spacingM
-    radius: Theme.cornerRadius
-    color: {
-        const baseColor = controlCenterArea.containsMouse || SessionData.isControlCenterOpen ? Theme.primaryPressed : Theme.secondaryHover;
-        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
-    }
-    anchors.verticalCenter: parent.verticalCenter
 
     function getWifiSignalIcon(signalStrength) {
         switch (signalStrength) {
@@ -33,6 +23,16 @@ Rectangle {
         }
     }
 
+    anchors.verticalCenter: parent.verticalCenter
+    color: {
+        const baseColor = controlCenterArea.containsMouse || SessionData.isControlCenterOpen ? Theme.primaryPressed :
+                                                                                               Theme.secondaryHover;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
+    }
+    height: 30
+    radius: Theme.cornerRadius
+    width: controlCenterRow.width + 2 * Theme.spacingM
+
     Row {
         id: controlCenterRow
 
@@ -40,28 +40,29 @@ Rectangle {
         spacing: Theme.spacingM
 
         MaterialIcon {
+            color: Theme.surfaceText
             name: "notifications"
             size: Theme.iconSize - 4
-            color: Theme.surfaceText
         }
 
         MaterialIcon {
+            color: Theme.surfaceText
             name: "bluetooth"
             size: Theme.iconSize - 4
-            color: Theme.surfaceText
         }
 
         MaterialIcon {
+            color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText : Theme.outlineButton
             name: {
                 if (NetworkService.networkStatus === "ethernet")
                     return "lan";
+
                 if (NetworkService.networkStatus === "wifi")
                     return getWifiSignalIcon(NetworkService.wifiSignalStrengthStr);
                 else
                     "wifi_off";
             }
             size: Theme.iconSize - 4
-            color: NetworkService.networkStatus !== "disconnected" ? Theme.surfaceText : Theme.outlineButton
         }
     }
 
@@ -69,8 +70,8 @@ Rectangle {
         id: controlCenterArea
 
         anchors.fill: parent
-        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
 
         onClicked: {
             Hyprland.dispatch('global quickshell:controlCenterToggle');

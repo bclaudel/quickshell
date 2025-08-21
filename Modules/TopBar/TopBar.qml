@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-
 import qs.Common
 
 PanelWindow {
@@ -9,17 +8,17 @@ PanelWindow {
     property real backgroundTransparency: SettingsData.topBarTransparency
 
     color: Theme.popupBackground()
+    implicitHeight: Theme.barHeight - 4
 
     anchors {
-        top: true
         left: true
         right: true
+        top: true
     }
-
-    implicitHeight: Theme.barHeight - 4
 
     Item {
         id: barContent
+
         anchors.fill: parent
         anchors.leftMargin: 8
         anchors.rightMargin: 8
@@ -27,23 +26,25 @@ PanelWindow {
         Row {
             id: leftSection
 
-            height: parent.height
-            spacing: Theme.spacingXS
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            spacing: Theme.spacingXS
 
-            Workspaces {}
+            Workspaces {
+            }
         }
 
         Row {
             id: rightSection
 
-            height: parent.height
-            spacing: Theme.spacingXS
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            spacing: Theme.spacingXS
 
-            ControlCenterButton {}
+            ControlCenterButton {
+            }
         }
     }
 }

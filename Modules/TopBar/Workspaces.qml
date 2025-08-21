@@ -9,33 +9,34 @@ Rectangle {
     property int maxWorkspaces: SettingsData.maxWorkspaces
     property var workspaces: getWorkspaces()
 
-    height: 30
-    width: workspacesRow.width + 2 * Theme.spacingM
+    // Function to get the workspaces
+    function getWorkspaces() {
+        workspaces = Array.from({
+                                    "length": maxWorkspaces
+                                }, (_, i) => {
+                                    return Hyprland.workspaces.values.find(ws => ws.id === i + 1);
+                                });
+    }
+
     anchors.verticalCenter: parent.verticalCenter
-    radius: Theme.cornerRadius
     color: {
         const baseColor = Theme.secondaryHover;
         return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * Theme.widgetTransparency);
     }
-
-    // Function to get the workspaces
-    function getWorkspaces() {
-        workspaces = Array.from({
-            length: maxWorkspaces
-        }, (_, i) => {
-            return Hyprland.workspaces.values.find(ws => ws.id === i + 1);
-        });
-    }
+    height: 30
+    radius: Theme.cornerRadius
+    width: workspacesRow.width + 2 * Theme.spacingM
 
     // Initialize the workspaces when the component is created
     Component.onCompleted: getWorkspaces()
 
     // Listen for changes in Hyprland.workspaces.values
     Connections {
-        target: Hyprland.workspaces
         function onValuesChanged() {
             getWorkspaces();
         }
+
+        target: Hyprland.workspaces
     }
 
     Row {
@@ -52,11 +53,10 @@ Rectangle {
                 property bool isActive: workspaces[index]?.active ?? false
                 property bool isOccupied: workspaces[index] !== undefined
 
-                width: isActive ? Theme.spacingXL + Theme.spacingM : Theme.spacingL + Theme.spacingXS
-
+                color: isActive ? Theme.primary : isOccupied ? Theme.surfaceTextAlpha : Theme.surfaceTextLight
                 height: Theme.spacingL
                 radius: height / 2
-                color: isActive ? Theme.primary : isOccupied ? Theme.surfaceTextAlpha : Theme.surfaceTextLight
+                width: isActive ? Theme.spacingXL + Theme.spacingM : Theme.spacingL + Theme.spacingXS
             }
         }
     }

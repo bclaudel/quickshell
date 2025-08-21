@@ -1,13 +1,11 @@
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
-
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
-
 import qs.Common
 import qs.Widgets
 
@@ -16,67 +14,54 @@ PanelWindow {
 
     property int controlCenterWidth: 460
 
-    visible: SessionData.isControlCenterOpen
-    implicitWidth: controlCenterWidth
-    exclusiveZone: 0
-    color: "transparent"
-
-    anchors {
-        top: true
-        right: true
-        bottom: true
+    function closeControlCenter() {
+        SessionData.isControlCenterOpen = false;
     }
 
     function openControlCenter() {
         SessionData.isControlCenterOpen = true;
     }
 
-    function closeControlCenter() {
-        SessionData.isControlCenterOpen = false;
-    }
-
     function toggleControlCenter() {
         SessionData.isControlCenterOpen = !SessionData.isControlCenterOpen;
     }
 
+    color: "transparent"
+    exclusiveZone: 0
+    implicitWidth: controlCenterWidth
+    visible: SessionData.isControlCenterOpen
+
+    anchors {
+        bottom: true
+        right: true
+        top: true
+    }
+
     HyprlandFocusGrab {
         id: grab
+
         active: SessionData.isControlCenterOpen
         windows: [root]
+
         onCleared: () => {
-            closeControlCenter();
-        }
+                       closeControlCenter();
+                   }
     }
 
     Loader {
         id: controlCenterLoader
-        asynchronous: true
+
         active: SessionData.isControlCenterOpen
-
-        anchors {
-            top: parent.top
-            bottom: parent.bottom
-            right: parent.right
-            left: parent.left
-            topMargin: SettingsData.hyprlandGapsOut
-            bottomMargin: SettingsData.hyprlandGapsOut
-            rightMargin: SettingsData.hyprlandGapsOut
-            leftMargin: SettingsData.hyprlandGapsOut
-        }
-
+        asynchronous: true
         focus: SessionData.isControlCenterOpen
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Escape) {
-                root.closeControlCenter();
-            }
-        }
 
         sourceComponent: Component {
             Rectangle {
                 id: controlCenterBackground
+
                 anchors.fill: parent
-                radius: Theme.cornerRadius
                 color: Theme.popupBackground()
+                radius: Theme.cornerRadius
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -84,36 +69,37 @@ PanelWindow {
                     spacing: Theme.spacingM
 
                     Column {
-                        width: parent.width
                         spacing: Theme.spacingM
+                        width: parent.width
 
                         Rectangle {
-                            width: parent.width
-                            height: 90
-                            radius: Theme.cornerRadius
-                            color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, Theme.getContentBackgroundAlpha() * 0.4)
                             border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.08)
                             border.width: 1
+                            color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, Theme.getContentBackgroundAlpha(
+                                               ) * 0.4)
+                            height: 90
+                            radius: Theme.cornerRadius
+                            width: parent.width
 
                             Row {
                                 anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
                                 anchors.leftMargin: Theme.spacingL
                                 anchors.rightMargin: Theme.spacingL
+                                anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingL
 
                                 Item {
                                     id: avatarContainer
 
-                                    width: 64
                                     height: 64
+                                    width: 64
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        radius: width / 2
-                                        color: "transparent"
                                         border.color: Theme.primary
                                         border.width: 1
+                                        color: "transparent"
+                                        radius: width / 2
                                         visible: true
                                     }
                                 }
@@ -123,49 +109,50 @@ PanelWindow {
                                     spacing: Theme.spacingXS
 
                                     StyledText {
-                                        text: "Ekko"
                                         color: Theme.surfaceText
                                         font.pixelSize: Theme.fontSizeLarge
                                         font.weight: Font.Medium
+                                        text: "Ekko"
                                     }
 
                                     StyledText {
-                                        text: "Unknown"
                                         color: Theme.surfaceText
                                         font.pixelSize: Theme.fontSizeSmall
                                         font.weight: Font.Normal
+                                        text: "Unknown"
                                     }
                                 }
                             }
 
                             Row {
                                 anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
                                 anchors.rightMargin: Theme.spacingL
+                                anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingS
 
                                 MaterialButton {
-                                      buttonSize: 40
-                                  iconName: "restart_alt"
-                                  iconSize: Theme.iconSize
-                                  iconColor: Theme.surfaceText
+                                    buttonSize: 40
+                                    iconColor: Theme.surfaceText
+                                    iconName: "restart_alt"
+                                    iconSize: Theme.iconSize
                                 }
 
                                 MaterialButton {
-                                  buttonSize: 40
-                                  iconName: "settings"
-                                  iconSize: Theme.iconSize
-                                  iconColor: Theme.surfaceText
+                                    buttonSize: 40
+                                    iconColor: Theme.surfaceText
+                                    iconName: "settings"
+                                    iconSize: Theme.iconSize
                                 }
 
                                 MaterialButton {
-                                  buttonSize: 40
-                                  iconName: "power_settings_new"
-                                  iconSize: Theme.iconSize
-                                  iconColor: Theme.surfaceText
-                                  onClicked: {
-                                      Hyprland.dispatch("global quickshell:sessionScreenOpen");
-                                  }
+                                    buttonSize: 40
+                                    iconColor: Theme.surfaceText
+                                    iconName: "power_settings_new"
+                                    iconSize: Theme.iconSize
+
+                                    onClicked: {
+                                        Hyprland.dispatch("global quickshell:sessionScreenOpen");
+                                    }
                                 }
                             }
                         }
@@ -177,11 +164,27 @@ PanelWindow {
                 }
             }
         }
+
+        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Escape)
+                            root.closeControlCenter();
+                        }
+
+        anchors {
+            bottom: parent.bottom
+            bottomMargin: SettingsData.hyprlandGapsOut
+            left: parent.left
+            leftMargin: SettingsData.hyprlandGapsOut
+            right: parent.right
+            rightMargin: SettingsData.hyprlandGapsOut
+            top: parent.top
+            topMargin: SettingsData.hyprlandGapsOut
+        }
     }
 
     GlobalShortcut {
-        name: "controlCenterOpen"
         description: "Open the control center"
+        name: "controlCenterOpen"
 
         onPressed: {
             root.openControlCenter();
@@ -189,8 +192,8 @@ PanelWindow {
     }
 
     GlobalShortcut {
-        name: "controlCenterClose"
         description: "Close the control center"
+        name: "controlCenterClose"
 
         onPressed: {
             root.closeControlCenter();
@@ -198,8 +201,8 @@ PanelWindow {
     }
 
     GlobalShortcut {
-        name: "controlCenterToggle"
         description: "Toggle the control center"
+        name: "controlCenterToggle"
 
         onPressed: {
             root.toggleControlCenter();

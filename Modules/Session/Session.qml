@@ -13,34 +13,50 @@ import qs.Widgets
 
 Scope {
     id: root
+
     property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
+
+    function closeLockScreen() {
+        lockScreenLoader.active = false;
+    }
+
+    function openLockScreen() {
+        lockScreenLoader.active = true;
+    }
+
+    function toggleLockScreen() {
+        lockScreenLoader.active = !lockScreenLoader.active;
+    }
 
     Loader {
         id: lockScreenLoader
+
         active: false
 
         sourceComponent: PanelWindow {
             id: lockScreen
+
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "quickshell:lockScreen"
+            color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b,
+                           Theme.opacityMedium)
+            exclusionMode: ExclusionMode.Ignore
+            implicitHeight: root.focusedScreen?.height ?? 0
+            implicitWidth: root.focusedScreen?.width ?? 0
             visible: lockScreenLoader.active
 
-            exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.namespace: "quickshell:lockScreen"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-            color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b, Theme.opacityMedium)
-
             anchors {
-                top: true
                 left: true
                 right: true
+                top: true
             }
-
-            implicitWidth: root.focusedScreen?.width ?? 0
-            implicitHeight: root.focusedScreen?.height ?? 0
 
             MouseArea {
                 id: sessionMouseArea
+
                 anchors.fill: parent
+
                 onClicked: {
                     root.closeLockScreen();
                 }
@@ -48,14 +64,15 @@ Scope {
 
             ColumnLayout {
                 id: lockScreenContent
+
                 anchors.centerIn: parent
                 spacing: Theme.spacingXL
 
                 Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Escape) {
-                        root.closeLockScreen();
-                    }
-                }
+                                    if (event.key === Qt.Key_Escape) {
+                                        root.closeLockScreen();
+                                    }
+                                }
 
                 ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
@@ -63,119 +80,125 @@ Scope {
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
-                        horizontalAlignment: Text.AlignHCenter
+                        color: Theme.surfaceText
                         font.pixelSize: Theme.fontSizeXXLarge
                         font.weight: Font.DemiBold
-                        color: Theme.surfaceText
+                        horizontalAlignment: Text.AlignHCenter
                         text: "Session"
                     }
+
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: Theme.fontSizeLarge
                         color: Theme.surfaceText
+                        font.pixelSize: Theme.fontSizeLarge
+                        horizontalAlignment: Text.AlignHCenter
                         text: "Arrow keys to navigate, Enter to select\nEsc or click anywhere to cancel"
                     }
                 }
 
                 GridLayout {
-                    columns: 3
                     columnSpacing: Theme.spacingL + 4
+                    columns: 3
                     rowSpacing: Theme.spacingL + 4
 
                     SessionButton {
                         id: sessionLock
-                        focus: lockScreen.visible
+
+                        KeyNavigation.down: sessionShutdown
+                        KeyNavigation.right: sessionLogout
                         buttonIcon: "lock"
+                        focus: lockScreen.visible
+
                         onClicked: {
                             console.log("Locking session");
                         }
-                        KeyNavigation.right: sessionLogout
-                        KeyNavigation.down: sessionShutdown
                     }
+
                     SessionButton {
                         id: sessionLogout
+
+                        KeyNavigation.down: sessionReboot
+                        KeyNavigation.left: sessionLock
+                        KeyNavigation.right: sessionHibernate
                         buttonIcon: "logout"
+
                         onClicked: {
                             console.log("Logging out");
                         }
-                        KeyNavigation.left: sessionLock
-                        KeyNavigation.right: sessionHibernate
-                        KeyNavigation.down: sessionReboot
                     }
+
                     SessionButton {
                         id: sessionHibernate
+
+                        KeyNavigation.down: sessionFirmwareReboot
+                        KeyNavigation.left: sessionLogout
                         buttonIcon: "downloading"
+
                         onClicked: {
                             console.log("Hibernating session");
                         }
-                        KeyNavigation.left: sessionLogout
-                        KeyNavigation.down: sessionFirmwareReboot
                     }
+
                     SessionButton {
                         id: sessionShutdown
+
+                        KeyNavigation.right: sessionReboot
+                        KeyNavigation.up: sessionLock
                         buttonIcon: "power_settings_new"
+
                         onClicked: {
                             console.log("Powering off");
                         }
-                        KeyNavigation.right: sessionReboot
-                        KeyNavigation.up: sessionLock
                     }
+
                     SessionButton {
                         id: sessionReboot
-                        buttonIcon: "restart_alt"
-                        onClicked: {
-                            console.log("Rebooting session");
-                        }
+
                         KeyNavigation.left: sessionShutdown
                         KeyNavigation.right: sessionFirmwareReboot
                         KeyNavigation.up: sessionLogout
+                        buttonIcon: "restart_alt"
+
+                        onClicked: {
+                            console.log("Rebooting session");
+                        }
                     }
+
                     SessionButton {
                         id: sessionFirmwareReboot
+
+                        KeyNavigation.left: sessionReboot
+                        KeyNavigation.up: sessionHibernate
                         buttonIcon: "settings_applications"
+
                         onClicked: {
                             console.log("Reboot to firmware settings");
                         }
-                        KeyNavigation.left: sessionReboot
-                        KeyNavigation.up: sessionHibernate
                     }
                 }
             }
         }
     }
 
-    function openLockScreen() {
-        lockScreenLoader.active = true;
-    }
-
-    function closeLockScreen() {
-        lockScreenLoader.active = false;
-    }
-
-    function toggleLockScreen() {
-        lockScreenLoader.active = !lockScreenLoader.active;
-    }
-
     IpcHandler {
-        target: "lockScreen"
+        function close(): void {
+        root.closeLockScreen();
+    }
 
         function open(): void {
-            root.openLockScreen();
-        }
-
-        function close(): void {
-            root.closeLockScreen();
-        }
+                             root.openLockScreen();
+                         }
 
         function toggle(): void {
-            root.toggleLockScreen();
-        }
+        root.toggleLockScreen();
+    }
+
+        target: "lockScreen"
     }
 
     GlobalShortcut {
-        name: "sessionScreenOpen"
         description: "Open the session screen"
+        name: "sessionScreenOpen"
 
         onPressed: {
             root.openLockScreen();
@@ -183,8 +206,8 @@ Scope {
     }
 
     GlobalShortcut {
-        name: "sessionScreenClose"
         description: "Close the session screen"
+        name: "sessionScreenClose"
 
         onPressed: {
             root.closeLockScreen();
@@ -192,8 +215,8 @@ Scope {
     }
 
     GlobalShortcut {
-        name: "sessionScreenToggle"
         description: "Toggle the session screen"
+        name: "sessionScreenToggle"
 
         onPressed: {
             root.toggleLockScreen();
