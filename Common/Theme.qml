@@ -68,6 +68,7 @@ Singleton {
     property color surfaceTextMedium: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.7)
     property color surfaceTextPressed: Qt.rgba(surfaceText.r, surfaceText.g, surfaceText.b, 0.12)
     property color surfaceVariant: getCurrentTheme().surfaceVariant
+    property color surfaceVariantText: getCurrentTheme().surfaceVariantText
     property color surfaceVariantAlpha: Qt.rgba(surfaceVariant.r, surfaceVariant.g, surfaceVariant.b,
                                                 0.2)
     property color tempDanger: "#ff5555"

@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 
@@ -17,15 +19,11 @@ Modal {
     function show() {
         spotlightOpen = true;
         open();
-        console.log("Launcher opened");
-        console.log(contentLoader.status);
-        console.log(contentLoader.item);
     }
 
     function hide() {
         spotlightOpen = false;
         close();
-        console.log("Launcher closed");
     }
 
     function toggle() {
@@ -40,7 +38,6 @@ Modal {
     height: 600
     content: spotlightContent
     onVisibleChanged: {
-        console.log("Launcher visibility changed: " + visible);
         if (visible && !spotlightOpen) {
             show();
         }
@@ -51,15 +48,56 @@ Modal {
 
     spotlightContent: Component {
         Item {
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 100
-                height: 100
-                color: "red"
+            id: splotlightKeyHandler
+
+            property alias appLauncher: appLauncher
+            property alias searchField: searchField
+
+            anchors.fill: parent
+            focus: true
+            Keys.onPressed: function (event) {
+                if (event.key === Qt.Key_Escape) {
+                    root.hide();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Down) {
+                    event.accepted = true;
+                }
             }
 
             AppLauncher {
                 id: appLauncher
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: Theme.spacingL
+                spacing: Theme.spacingL
+
+                Row {
+                    width: parent.width
+                    spacing: Theme.spacingM
+
+                    TextField {
+                        id: searchField
+
+                        width: parent.width - 80 - Theme.spacingM
+                        height: 56
+                        backgroundColor: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g,
+                                                 Theme.surfaceVariant.b,
+                                                 Theme.getContentBackgroundAlpha() * 0.7)
+                        normalBorderColor: Theme.outlineMedium
+                        focusedBorderColor: Theme.primary
+                        iconName: "search"
+                        iconSize: Theme.iconSize
+                        iconColor: Theme.surfaceVariantText
+                        iconFocusedColor: Theme.primary
+
+                        onTextEdited: {
+                            console.log("Search query:", searchField.text);
+                            appLauncher.searchQuery = searchField.text;
+                        }
+                    }
+                }
             }
         }
     }

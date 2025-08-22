@@ -14,7 +14,7 @@ PanelWindow {
     property real height: 300
     property real width: 400
     property string positioning: "center"
-    property color backgroundColor: Theme.surfaceVariant
+    property color backgroundColor: Theme.popupBackground()
     property color borderColor: Theme.outlineMedium
     property real borderWidth: 1
     property real cornerRadius: Theme.cornerRadius
