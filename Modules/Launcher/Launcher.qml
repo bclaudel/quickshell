@@ -9,11 +9,59 @@ import qs.Common
 import qs.Widgets
 
 Modal {
-    id: launcherModal
+    id: root
+
+    property bool spotlightOpen: false
+    property Component spotlightContent
 
     function show() {
-        console.log("Launcher opened");
+        spotlightOpen = true;
         open();
+        console.log("Launcher opened");
+        console.log(contentLoader.status);
+        console.log(contentLoader.item);
+    }
+
+    function hide() {
+        spotlightOpen = false;
+        close();
+        console.log("Launcher closed");
+    }
+
+    function toggle() {
+        if (spotlightOpen) {
+            show();
+        } else {
+            hide();
+        }
+    }
+
+    width: 550
+    height: 600
+    content: spotlightContent
+    onVisibleChanged: {
+        console.log("Launcher visibility changed: " + visible);
+        if (visible && !spotlightOpen) {
+            show();
+        }
+    }
+    onBackgroundClicked: {
+        hide();
+    }
+
+    spotlightContent: Component {
+        Item {
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 100
+                height: 100
+                color: "red"
+            }
+
+            AppLauncher {
+                id: appLauncher
+            }
+        }
     }
 
     GlobalShortcut {
@@ -21,7 +69,7 @@ Modal {
         name: "openLauncherModal"
 
         onPressed: {
-            launcherModal.open();
+            root.open();
         }
     }
 }

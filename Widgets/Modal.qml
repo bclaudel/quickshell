@@ -3,11 +3,21 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
+import qs.Common
+
 PanelWindow {
     id: root
 
+    property alias content: contentLoader.sourceComponent
+    property alias contentLoader: contentLoader
+
     property real height: 300
     property real width: 400
+    property string positioning: "center"
+    property color backgroundColor: Theme.surfaceVariant
+    property color borderColor: Theme.outlineMedium
+    property real borderWidth: 1
+    property real cornerRadius: Theme.cornerRadius
 
     signal backgroundClicked
 
@@ -24,11 +34,11 @@ PanelWindow {
         visible = !visible;
     }
 
-    WlrLayershell.exclusiveZone: -1
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.layer: WlrLayershell.Overlay
     color: "transparent"
     visible: false
+
+    WlrLayershell.exclusiveZone: -1
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     anchors {
         top: true
@@ -41,9 +51,8 @@ PanelWindow {
         id: background
 
         anchors.fill: parent
-        color: "black"
-        opacity: 0
-        visible: root.visible
+        color: Qt.rgba(Theme.surfaceContainer.r, Theme.surfaceContainer.g, Theme.surfaceContainer.b,
+                       Theme.opacityMedium)
 
         MouseArea {
             anchors.fill: parent
@@ -55,7 +64,6 @@ PanelWindow {
                            // Check if the clik is outside the content area
                            if (localPos.x < 0 || localPos.x > content.width || localPos.y < 0
                                || localPos.y > content.height) {
-                               console.log("Clicked outside modal content");
                                root.backgroundClicked();
                            }
                        }
@@ -65,9 +73,22 @@ PanelWindow {
     Rectangle {
         id: content
 
-        color: "white"
         height: root.height
         width: root.width
+        anchors.centerIn: root.positioning === "center" ? parent : undefined
+
+        color: root.backgroundColor
+        radius: root.cornerRadius
+        border.color: root.borderColor
+        border.width: root.borderWidth
+
+        Loader {
+            id: contentLoader
+
+            anchors.fill: parent
+            active: root.visible
+            asynchronous: false
+        }
     }
 
     FocusScope {
@@ -78,7 +99,6 @@ PanelWindow {
         visible: root.visible
 
         Keys.onEscapePressed: event => {
-                                  console.log("Key pressed in modal:", event.key);
                                   root.close();
                               }
     }
