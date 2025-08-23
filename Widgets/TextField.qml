@@ -6,7 +6,7 @@ import qs.Widgets
 StyledRect {
     id: root
 
-    property alias text: input.text
+    property alias text: textInput.text
     property string iconName: ""
     property int iconSize: Theme.iconSize
     property color iconColor: Theme.surfaceVariantText
@@ -28,12 +28,16 @@ StyledRect {
 
     signal textEdited
 
+    function forceActiveFocus() {
+        textInput.forceActiveFocus();
+    }
+
     width: 200
     height: 48
     radius: Theme.cornerRadius
     color: backgroundColor
-    border.color: input.activeFocus ? focusedBorderColor : normalBorderColor
-    border.width: input.activeFocus ? focusedBorderWidth : borderWidth
+    border.color: textInput.activeFocus ? focusedBorderColor : normalBorderColor
+    border.width: textInput.activeFocus ? focusedBorderWidth : borderWidth
 
     MaterialIcon {
         id: icon
@@ -48,7 +52,7 @@ StyledRect {
     }
 
     TextInput {
-        id: input
+        id: textInput
 
         anchors.fill: parent
         anchors.leftMargin: root.leftPadding

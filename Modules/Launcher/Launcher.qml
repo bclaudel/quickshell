@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Controls
 
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Widgets
 
@@ -20,6 +19,13 @@ Modal {
     function show() {
         spotlightOpen = true;
         open();
+
+        // Force the focus to the search field after opening
+        Qt.callLater(() => {
+                         if (contentLoader.item && contentLoader.item.searchField) {
+                             contentLoader.item.searchField.forceActiveFocus();
+                         }
+                     });
     }
 
     function hide() {
@@ -55,12 +61,19 @@ Modal {
             property alias searchField: searchField
 
             anchors.fill: parent
-            focus: true
             Keys.onPressed: function (event) {
                 if (event.key === Qt.Key_Escape) {
                     root.hide();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Down) {
+                    appLauncher.selectNext();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Up) {
+                    appLauncher.selectPrevious();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    appLauncher.launchSelected();
+                    root.hide();
                     event.accepted = true;
                 }
             }
@@ -85,6 +98,7 @@ Modal {
 
                         width: parent.width
                         height: 56
+                        focus: true
                         backgroundColor: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g,
                                                  Theme.surfaceVariant.b,
                                                  Theme.getContentBackgroundAlpha() * 0.7)
@@ -121,17 +135,33 @@ Modal {
 
                         signal itemClicked(int index, var modelData)
 
+                        function ensureVisible(index) {
+                            if (index < 0 || index >= count) {
+                                return;
+                            }
+
+                            var itemY = index * (itemHeight + itemSpacing);
+                            var itemBottom = itemY + itemHeight;
+                            if (itemY < contentY) {
+                                contentY = itemY;
+                            } else if (itemBottom > contentY + height) {
+                                contentY = itemBottom - height;
+                            }
+                        }
+
                         anchors.fill: parent
                         anchors.margins: Theme.spacingS
                         model: splotlightKeyHandler.appLauncher.model
+                        currentIndex: appLauncher.selectedIndex
                         clip: true
                         spacing: Theme.spacingS
 
                         onCurrentIndexChanged: {
-                            console.log("Current index changed to", currentIndex);
+                            ensureVisible(currentIndex);
                         }
                         onItemClicked: function (index, modelData) {
-                            console.log("Item clicked:", modelData);
+                            appLauncher.launchApp(modelData);
+                            root.hide();
                         }
 
                         delegate: Rectangle {

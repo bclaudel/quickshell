@@ -8,7 +8,7 @@ Item {
     property alias model: filteredModel
 
     property string searchQuery: ""
-    property string viewMode: "list" // "list" or "grid"
+    property int selectedIndex: 0
     property bool debounceSearch: true
     property int debounceInterval: 50
 
@@ -38,10 +38,36 @@ Item {
                                                       "icon": app.icon || "application-x-executable",
                                                       "comment": app.comment || "",
                                                       "categories": app.categories || [],
-                                                      "entry": app
+                                                      "desktopEntry": app
                                                   });
                          }
                      });
+    }
+
+    function selectNext() {
+        if (filteredModel.count > 0) {
+            selectedIndex = Math.min(selectedIndex + 1, filteredModel.count - 1);
+        }
+    }
+
+    function selectPrevious() {
+        if (filteredModel.count > 0) {
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+        }
+    }
+
+    function launchSelected() {
+        if (filteredModel.count > 0 && selectedIndex >= 0 && selectedIndex < filteredModel.count) {
+            var selectedApp = filteredModel.get(selectedIndex);
+            launchApp(selectedApp);
+        }
+    }
+
+    function launchApp(appData) {
+        if (!appData)
+            return;
+
+        appData.desktopEntry.execute();
     }
 
     onSearchQueryChanged: {
