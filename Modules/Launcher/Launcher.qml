@@ -83,7 +83,7 @@ Modal {
                     TextField {
                         id: searchField
 
-                        width: parent.width - 80 - Theme.spacingM
+                        width: parent.width
                         height: 56
                         backgroundColor: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g,
                                                  Theme.surfaceVariant.b,
@@ -119,18 +119,38 @@ Modal {
                         property bool showDescription: true
                         property int itemSpacing: Theme.spacingS
 
+                        signal itemClicked(int index, var modelData)
+
                         anchors.fill: parent
                         anchors.margins: Theme.spacingS
                         model: splotlightKeyHandler.appLauncher.model
+                        clip: true
+                        spacing: Theme.spacingS
+
+                        onCurrentIndexChanged: {
+                            console.log("Current index changed to", currentIndex);
+                        }
+                        onItemClicked: function (index, modelData) {
+                            console.log("Item clicked:", modelData);
+                        }
 
                         delegate: Rectangle {
+                            id: item
+
+                            required property int index
+                            required property var model
                             required property string name
                             required property string icon
 
                             width: ListView.view.width
                             height: resultsList.itemHeight
                             radius: Theme.cornerRadius
-                            color: ListView.isCurrentItem ? Theme.primaryPressed : "white"
+                            color: ListView.isCurrentItem ? Theme.primaryPressed :
+                                                            listMouseArea.containsMouse
+                                                            ? Theme.primaryHoverLight : Qt.rgba(
+                                                                  Theme.surfaceVariant.r,
+                                                                  Theme.surfaceVariant.g,
+                                                                  Theme.surfaceVariant.b, 0.03)
                             border.color: ListView.isCurrentItem ? Theme.primarySelected :
                                                                    Theme.outlineMedium
                             border.width: ListView.isCurrentItem ? 2 : 1
@@ -149,10 +169,9 @@ Modal {
                                         id: listIconImg
 
                                         anchors.fill: parent
-                                        source: icon ? Quickshell.iconPath(icon, "") : ""
+                                        source: item.icon ? Quickshell.iconPath(item.icon, "") : ""
                                         smooth: true
-                                        asynchronous: true
-                                        visible: status === Image.Ready
+                                        visible: source !== "" && status === Image.Ready
                                     }
                                     Rectangle {
                                         anchors.fill: parent
@@ -164,13 +183,52 @@ Modal {
 
                                         StyledText {
                                             anchors.centerIn: parent
-                                            text: (name && name.length > 0) ? name.charAt(
-                                                                                  0).toUpperCase() :
-                                                                              "?"
+                                            text: (item.name && item.name.length > 0) ? item.name.charAt(
+                                                                                            0).toUpperCase(
+                                                                                            ) : "?"
                                             font.pixelSize: resultsList.iconSize * 0.4
                                             font.weight: Font.Bold
                                             color: Theme.primary
                                         }
+                                    }
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - resultsList.iconSize - Theme.spacingL
+                                    spacing: Theme.spacingXS
+
+                                    StyledText {
+                                        width: parent.width
+                                        text: item.name || ""
+                                        color: Theme.surfaceText
+                                        font.pixelSize: Theme.fontSizeMedium
+                                        font.weight: Font.Medium
+                                        elide: Text.ElideRight
+                                    }
+
+                                    StyledText {
+                                        width: parent.width
+                                        text: item.model.comment || ""
+                                        color: Theme.surfaceVariantText
+                                        font.pixelSize: Theme.fontSizeMedium
+                                        elide: Text.ElideRight
+                                        visible: resultsList.showDescription && item.model.comment
+                                                 !== ""
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: listMouseArea
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+
+                                onClicked: mouse => {
+                                    if (mouse.button === Qt.LeftButton) {
+                                        resultsList.itemClicked(item.index, item.model);
                                     }
                                 }
                             }
