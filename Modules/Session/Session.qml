@@ -1,7 +1,8 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 
 import Quickshell
 import Quickshell.Io
@@ -17,25 +18,25 @@ Scope {
     property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor
                                                         ?.name)
 
-    function closeLockScreen() {
-        lockScreenLoader.active = false;
+    function closeSessionScreen() {
+        sessionLoader.active = false;
     }
 
-    function openLockScreen() {
-        lockScreenLoader.active = true;
+    function openSessionScreen() {
+        sessionLoader.active = true;
     }
 
-    function toggleLockScreen() {
-        lockScreenLoader.active = !lockScreenLoader.active;
+    function toggleSessionScreen() {
+        sessionLoader.active = !sessionLoader.active;
     }
 
     Loader {
-        id: lockScreenLoader
+        id: sessionLoader
 
         active: false
 
         sourceComponent: PanelWindow {
-            id: lockScreen
+            id: sessionRoot
 
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             WlrLayershell.layer: WlrLayer.Overlay
@@ -45,7 +46,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             implicitHeight: root.focusedScreen?.height ?? 0
             implicitWidth: root.focusedScreen?.width ?? 0
-            visible: lockScreenLoader.active
+            visible: sessionLoader.active
 
             anchors {
                 left: true
@@ -59,21 +60,21 @@ Scope {
                 anchors.fill: parent
 
                 onClicked: {
-                    root.closeLockScreen();
+                    root.closeSessionScreen();
                 }
             }
 
             ColumnLayout {
-                id: lockScreenContent
+                id: sessionContent
 
                 anchors.centerIn: parent
                 spacing: Theme.spacingXL
 
                 Keys.onPressed: event => {
-                                    if (event.key === Qt.Key_Escape) {
-                                        root.closeLockScreen();
-                                    }
-                                }
+                    if (event.key === Qt.Key_Escape) {
+                        root.closeSessionScreen();
+                    }
+                }
 
                 ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
@@ -105,96 +106,121 @@ Scope {
                     SessionButton {
                         id: sessionLock
 
+                        buttonIcon: "lock"
+                        focus: sessionRoot.visible
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["loginctl", "lock-session"]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.down: sessionShutdown
                         KeyNavigation.right: sessionLogout
-                        buttonIcon: "lock"
-                        focus: lockScreen.visible
-
-                        onClicked: {
-                            console.log("Locking session");
-                        }
                     }
 
                     SessionButton {
                         id: sessionLogout
 
+                        buttonIcon: "logout"
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["pkill", "Hyprland"]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.down: sessionReboot
                         KeyNavigation.left: sessionLock
                         KeyNavigation.right: sessionHibernate
-                        buttonIcon: "logout"
-
-                        onClicked: {
-                            console.log("Logging out");
-                        }
                     }
 
                     SessionButton {
                         id: sessionHibernate
 
+                        buttonIcon: "downloading"
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["bash", "-c",
+                                                         `systemctl hibernate || loginctl hibernate`]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.down: sessionFirmwareReboot
                         KeyNavigation.left: sessionLogout
-                        buttonIcon: "downloading"
-
-                        onClicked: {
-                            console.log("Hibernating session");
-                        }
                     }
 
                     SessionButton {
                         id: sessionShutdown
 
+                        buttonIcon: "power_settings_new"
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["bash", "-c",
+                                                         `systemctl poweroff || loginctl poweroff`]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.right: sessionReboot
                         KeyNavigation.up: sessionLock
-                        buttonIcon: "power_settings_new"
-
-                        onClicked: {
-                            console.log("Powering off");
-                        }
                     }
 
                     SessionButton {
                         id: sessionReboot
 
+                        buttonIcon: "restart_alt"
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["bash", "-c",
+                                                         `reboot || loginctl reboot`]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.left: sessionShutdown
                         KeyNavigation.right: sessionFirmwareReboot
                         KeyNavigation.up: sessionLogout
-                        buttonIcon: "restart_alt"
-
-                        onClicked: {
-                            console.log("Rebooting session");
-                        }
                     }
 
                     SessionButton {
                         id: sessionFirmwareReboot
 
+                        buttonIcon: "settings_applications"
+                        onClicked: {
+                            onClicked: {
+                                Quickshell.execDetached(["bash", "-c",
+                                                         `systemctl reboot --firmware-setup || loginctl reboot --firmware-setup`]);
+                                root.closeSessionScreen();
+                            }
+                        }
+
                         KeyNavigation.left: sessionReboot
                         KeyNavigation.up: sessionHibernate
-                        buttonIcon: "settings_applications"
-
-                        onClicked: {
-                            console.log("Reboot to firmware settings");
-                        }
                     }
+
+                    // TODO: Add sleep button
                 }
+                // TODO: Add tooltip
             }
         }
     }
 
     IpcHandler {
         function close(): void {
-        root.closeLockScreen();
-    }
+            root.closeSessionScreen();
+        }
 
         function open(): void {
-                             root.openLockScreen();
-                         }
+            root.openSessionScreen();
+        }
 
         function toggle(): void {
-        root.toggleLockScreen();
-    }
+            root.toggleSessionScreen();
+        }
 
-        target: "lockScreen"
+        target: "session"
     }
 
     GlobalShortcut {
@@ -202,7 +228,7 @@ Scope {
         name: "sessionScreenOpen"
 
         onPressed: {
-            root.openLockScreen();
+            root.openSessionScreen();
         }
     }
 
@@ -211,7 +237,7 @@ Scope {
         name: "sessionScreenClose"
 
         onPressed: {
-            root.closeLockScreen();
+            root.closeSessionScreen();
         }
     }
 
@@ -220,7 +246,7 @@ Scope {
         name: "sessionScreenToggle"
 
         onPressed: {
-            root.toggleLockScreen();
+            root.toggleSessionScreen();
         }
     }
 }
