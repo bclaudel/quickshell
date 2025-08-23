@@ -8,6 +8,8 @@ import qs.Services
 Item {
     id: root
 
+    property alias model: filteredModel
+
     property string searchQuery: ""
     property string viewMode: "list" // "list" or "grid"
     property bool debounceSearch: true
