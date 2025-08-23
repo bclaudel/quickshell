@@ -18,6 +18,26 @@ Scope {
     property var focusedScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor
                                                         ?.name)
 
+    component DescriptionLabel: Rectangle {
+        id: descriptionLabel
+
+        property string text
+        property color textColor: Theme.surfaceText
+
+        color: Qt.rgba(Theme.surfaceVariant.r, Theme.surfaceVariant.g, Theme.surfaceVariant.b, 0.5)
+        radius: 18
+        implicitHeight: descriptionLabelText.implicitHeight + Theme.spacingXL
+        implicitWidth: descriptionLabelText.implicitWidth + Theme.spacingXL
+
+        StyledText {
+            id: descriptionLabelText
+
+            anchors.centerIn: parent
+            color: descriptionLabel.textColor
+            text: descriptionLabel.text
+        }
+    }
+
     function closeSessionScreen() {
         sessionLoader.active = false;
     }
@@ -37,6 +57,8 @@ Scope {
 
         sourceComponent: PanelWindow {
             id: sessionRoot
+
+            property string subtitle
 
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             WlrLayershell.layer: WlrLayer.Overlay
@@ -106,6 +128,7 @@ Scope {
                     SessionButton {
                         id: sessionLock
 
+                        buttonText: "Lock"
                         buttonIcon: "lock"
                         focus: sessionRoot.visible
                         onClicked: {
@@ -113,6 +136,10 @@ Scope {
                                 Quickshell.execDetached(["loginctl", "lock-session"]);
                                 root.closeSessionScreen();
                             }
+                        }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
                         }
 
                         KeyNavigation.down: sessionShutdown
@@ -122,12 +149,17 @@ Scope {
                     SessionButton {
                         id: sessionLogout
 
+                        buttonText: "Logout"
                         buttonIcon: "logout"
                         onClicked: {
                             onClicked: {
                                 Quickshell.execDetached(["pkill", "Hyprland"]);
                                 root.closeSessionScreen();
                             }
+                        }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
                         }
 
                         KeyNavigation.down: sessionReboot
@@ -138,6 +170,7 @@ Scope {
                     SessionButton {
                         id: sessionHibernate
 
+                        buttonText: "Hibernate"
                         buttonIcon: "downloading"
                         onClicked: {
                             onClicked: {
@@ -145,6 +178,10 @@ Scope {
                                                          `systemctl hibernate || loginctl hibernate`]);
                                 root.closeSessionScreen();
                             }
+                        }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
                         }
 
                         KeyNavigation.down: sessionFirmwareReboot
@@ -154,6 +191,7 @@ Scope {
                     SessionButton {
                         id: sessionShutdown
 
+                        buttonText: "Shutdown"
                         buttonIcon: "power_settings_new"
                         onClicked: {
                             onClicked: {
@@ -161,6 +199,10 @@ Scope {
                                                          `systemctl poweroff || loginctl poweroff`]);
                                 root.closeSessionScreen();
                             }
+                        }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
                         }
 
                         KeyNavigation.right: sessionReboot
@@ -170,6 +212,7 @@ Scope {
                     SessionButton {
                         id: sessionReboot
 
+                        buttonText: "Reboot"
                         buttonIcon: "restart_alt"
                         onClicked: {
                             onClicked: {
@@ -177,6 +220,10 @@ Scope {
                                                          `reboot || loginctl reboot`]);
                                 root.closeSessionScreen();
                             }
+                        }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
                         }
 
                         KeyNavigation.left: sessionShutdown
@@ -187,6 +234,7 @@ Scope {
                     SessionButton {
                         id: sessionFirmwareReboot
 
+                        buttonText: "Reboot to firmare settings"
                         buttonIcon: "settings_applications"
                         onClicked: {
                             onClicked: {
@@ -195,14 +243,20 @@ Scope {
                                 root.closeSessionScreen();
                             }
                         }
+                        onFocusChanged: {
+                            if (focus)
+                            sessionRoot.subtitle = buttonText;
+                        }
 
                         KeyNavigation.left: sessionReboot
                         KeyNavigation.up: sessionHibernate
                     }
-
-                    // TODO: Add sleep button
                 }
-                // TODO: Add tooltip
+
+                DescriptionLabel {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: sessionRoot.subtitle
+                }
             }
         }
     }

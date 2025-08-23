@@ -7,10 +7,10 @@ import Quickshell
 Singleton {
     id: root
 
+    property int currentThemeIndex: 0
     property color archBlue: "#1793D1"
     property real barHeight: 48
     property real cornerRadius: 12
-    property int currentThemeIndex: 0
     property color error: "#F2B8B5"
     property color errorHover: Qt.rgba(error.r, error.g, error.b, 0.12)
     property color errorPressed: Qt.rgba(error.r, error.g, error.b, 0.9)
