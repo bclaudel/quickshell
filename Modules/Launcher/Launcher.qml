@@ -87,7 +87,7 @@ Modal {
                 anchors.margins: Theme.spacingL
                 spacing: Theme.spacingL
 
-                visible: appLauncher.model.count > 0
+                visible: true
 
                 Row {
                     width: parent.width
