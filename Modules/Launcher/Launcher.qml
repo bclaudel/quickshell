@@ -85,7 +85,7 @@ Modal {
             Column {
                 anchors.fill: parent
                 anchors.margins: Theme.spacingL
-                spacing: Theme.spacingL
+                spacing: Theme.spacingXL
 
                 visible: true
 

@@ -1,14 +1,16 @@
 import QtQuick
+
 import qs.Common
 
 Text {
     id: root
 
-    antialiasing: true
+    verticalAlignment: Text.AlignVCenter
     color: Theme.surfaceText
-    elide: Text.ElideRight
+    font.family: SettingsData.fontFamily
     font.pixelSize: 14
     font.weight: Font.Normal
-    verticalAlignment: Text.AlignVCenter
+    antialiasing: true
     wrapMode: Text.WordWrap
+    elide: Text.ElideRight
 }

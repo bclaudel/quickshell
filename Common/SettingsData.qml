@@ -12,4 +12,5 @@ Singleton {
     property int maxWorkspaces: 8
     property string networkPreference: "auto"
     property real topBarTransparency: 0.75
+    property string fontFamily: "Roboto"
 }
