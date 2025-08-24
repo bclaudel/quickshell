@@ -1,5 +1,6 @@
 import QtQuick
 
+import qs.Common
 import qs.Services
 
 Item {
@@ -22,11 +23,19 @@ Item {
         }
 
         if (searchQuery === "") {
-            // No search query, show all apps sorted alphabetically
             apps.sort((a, b) => {
-                          var nameA = (a.name || "").toLowerCase();
-                          var nameB = (b.name || "").toLowerCase();
-                          return nameA.localeCompare(nameB);
+                          var aFrecency = AppUsageHistoryData.computeFrecency(a.id);
+                          var bFrecency = AppUsageHistoryData.computeFrecency(b.id);
+
+                          // First sort by frecency
+                          if (aFrecency !== bFrecency) {
+                              return bFrecency - aFrecency;
+                          }
+
+                          // Then sort alphabetically
+                          var aName = (a.name || "").toLowerCase();
+                          var bName = (b.name || "").toLowerCase();
+                          return aName.localeCompare(bName);
                       });
         }
 
@@ -67,6 +76,7 @@ Item {
         if (!appData)
             return;
 
+        AppUsageHistoryData.addAppUsage(appData.desktopEntry);
         appData.desktopEntry.execute();
     }
 
