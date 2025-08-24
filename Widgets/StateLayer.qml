@@ -1,13 +1,12 @@
 import QtQuick
 
 import qs.Common
-import qs.Widgets
 
 MouseArea {
     id: root
 
-    property real cornerRadius: parent?.radius ?? Theme.cornerRadius
     property bool disabled: false
+    property real cornerRadius: Theme.cornerRadius
     property color stateColor: Theme.surfaceText
 
     anchors.fill: parent
