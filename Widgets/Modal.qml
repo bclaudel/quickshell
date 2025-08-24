@@ -75,7 +75,10 @@ PanelWindow {
 
         height: root.height
         width: root.width
-        anchors.centerIn: root.positioning === "center" ? parent : undefined
+        // anchors.centerIn: root.positioning === "center" ? parent : undefined
+        anchors.top: parent.top
+        anchors.topMargin: 5 * Theme.barHeight
+        anchors.horizontalCenter: parent.horizontalCenter
 
         color: root.backgroundColor
         radius: root.cornerRadius
